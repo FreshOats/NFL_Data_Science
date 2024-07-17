@@ -22,3 +22,18 @@ The sources of these data were related to competitions on Kaggle; however the go
 The original project used a PostgreSQL database, which is what I will continue to use for this iteration of the project. 
 
 Since there is no way to connect the data from each datatset - the player IDs are not specified as consistent across the data, and the seasons are also unclear from the first dataset, I will maintain these in two separate databases; though this may change if there is enough of a correlation in Player ID numbers to the GSISID numbers, that may link the two datasets. This would be ideal, because it is possible that some players who sustained one of the injuries may also correlate with the other type. 
+
+The code that establishes the databases and tables are in the following files:
+-  SQL/concussion.sql
+-  /SQL/injuries.sql 
+
+#### Injuries.sql
+    The injuries database was straightforward in setup. There are three tables: plays, injuries, and tracking.
+    The Playkey is used as the Primary Key and connects the plays table to each of the other tables. 
+
+#### Concussion.sql
+    The concussion database is made up of 6 tables: game_data, play_information, role_data, NGS_data, punt_data, and video_review. Most of these are connected via a PK combining the GSISID, PlayID, and GameKey. Each of the tables with the exception of the NGS data table, provide overall qualities of the stadium, game, and players. The NGS data imported 10 different files' worth of data, resulting in 61 million rows of data collected every 1/10th second. 
+
+    Issues: 
+    NGS_Data - when importing the data, at least one of the INT values was entered as a float, so this will need to be changed back to INT. 
+    Video_Review - one of the rows includes "Unknown" in almost every column, making it such that the primary_partner_gsisid is included as VARCHAR instead of INT again.  
