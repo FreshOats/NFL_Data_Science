@@ -29,7 +29,11 @@ The code that establishes the databases and tables are in the following files:
 
 #### Injuries.sql
     The injuries database was straightforward in setup. There are three tables: plays, injuries, and tracking.
-    The Playkey is used as the Primary Key and connects the plays table to each of the other tables. 
+    The Playkey is used as the Primary Key and connects the plays table to each of the other tables. The three tables within this database contained qualitative measures on the injuryrecord and playlist tables, and then the quantitative positioning and directional data from the NGS tracking was contained on the playertrackdata table. 
+
+    After adding the data to SQL, the unnecessary columns were removed and the injuryrecord and playlist tables were joined and saved as a new table, Qualitative, since upon EDA it was noted that there would need to be substantial programmatic changes to those tables that would be ideal to do in transformation on Python prior to joining with the tracking data. 
+
+    
 
 #### Concussion.sql
     The concussion database is made up of 6 tables: game_data, play_information, role_data, NGS_data, punt_data, and video_review. Most of these are connected via a PK combining the GSISID, PlayID, and GameKey. Each of the tables with the exception of the NGS data table, provide overall qualities of the stadium, game, and players. The NGS data imported 10 different files' worth of data, resulting in 61 million rows of data collected every 1/10th second. 
