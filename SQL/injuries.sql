@@ -35,7 +35,7 @@ CREATE TABLE injuries (
 CREATE TABLE tracking (
 	playkey VARCHAR(50)
 	, time FLOAT
-	, event VARCHAR(50)
+	, event VARCHAR(30)
 	, x FLOAT
 	, y FLOAT
 	, dir FLOAT
