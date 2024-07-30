@@ -15,7 +15,7 @@ def data_loader(dataset, database='nfl_surface'): # Read in raw data from SQL da
     uri = f"postgresql://postgres:{db_password}@127.0.0.1:5432/{database}"
     del db_password
     
-    valid_datasets = ['clean_quals', 'qualitative', 'tracking', 'injuries', 'plays']
+    valid_datasets = ['clean_quals', 'qualitative', 'tracking', 'injuries', 'plays', 'game_data', 'play_information', 'punt_data', 'role_data', 'video_review', 'ngs_data']
     if dataset not in valid_datasets:
         raise ValueError(f"Invalid dataset name '{dataset}'. Valid options are: {valid_datasets}")
 
@@ -33,11 +33,30 @@ def data_loader(dataset, database='nfl_surface'): # Read in raw data from SQL da
         elif dataset == 'injuries':
             query = "SELECT playkey, bodypart, DM_M1, DM_M7, DM_M28, DM_M42 FROM injuries"
             df = pl.read_database_uri(query=query, uri=uri)
-
         elif dataset == 'tracking':
             scan = pl.scan_csv("F:/Data/nfl-playing-surface-analytics/PlayerTrackData.csv")
             df = scan.collect(streaming=True, infer_schema_length=10000)
+        
+        elif dataset == 'game_data':
+            query = "SELECT gamekey, game_date, game_site, start_time, hometeamcode, visitteamcode, stadiumtype, turf, gameweather, temperature FROM game_data"
+            df = pl.read_database_uri(query=query, uri=uri)
+        elif dataset == 'play_information':
+            query = "SELECT gamekey, game_date, playid, yardline, quarter, play_type, poss_team, score_home_visiting FROM play_information"
+            df = pl.read_database_uri(query=query, uri=uri)
+        elif dataset == 'punt_data':
+            query = "SELECT gsisid, position FROM punt_data"
+            df = pl.read_database_uri(query=query, uri=uri) 
+        elif dataset == 'role_data':
+            query = "SELECT gamekey , playid , gsisid , role FROM role_data"
+            df = pl.read_database_uri(query=query, uri=uri)
+        elif dataset == 'video_review':
+            query = "SELECT gamekey, playid, gsisid, player_activity_derived, primary_impact_type, primary_partner_activity_derived, primary_partner_gsisid FROM video_review"
+            df = pl.read_database_uri(query=query, uri=uri)
+        elif dataset == 'ngs_data':
+            query = "SELECT gamekey, playid, gsisid, time, x, y, dis, o, dir, event FROM ngs_data"
+            df = pl.read_database_uri(query=query, uri=uri)
         return df
+    
     except Exception as e: 
         print(f"An error occurred while loading the dataset '{dataset}': {e}")
         return None
