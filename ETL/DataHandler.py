@@ -15,7 +15,7 @@ def data_loader(dataset, database='nfl_surface'): # Read in raw data from SQL da
     uri = f"postgresql://postgres:{db_password}@127.0.0.1:5432/{database}"
     del db_password
     
-    valid_datasets = ['clean_quals', 'qualitative', 'tracking', 'injuries', 'plays', 'game_data', 'play_information', 'punt_data', 'role_data', 'video_review', 'ngs_data']
+    valid_datasets = ['clean_quals', 'qualitative', 'tracking', 'injuries', 'plays', 'ngs_data', 'concussion']
     if dataset not in valid_datasets:
         raise ValueError(f"Invalid dataset name '{dataset}'. Valid options are: {valid_datasets}")
 
@@ -37,20 +37,8 @@ def data_loader(dataset, database='nfl_surface'): # Read in raw data from SQL da
             scan = pl.scan_csv("F:/Data/nfl-playing-surface-analytics/PlayerTrackData.csv")
             df = scan.collect(streaming=True, infer_schema_length=10000)
         
-        elif dataset == 'game_data':
-            query = "SELECT gamekey, game_date, game_site, start_time, hometeamcode, visitteamcode, stadiumtype, turf, gameweather, temperature FROM game_data"
-            df = pl.read_database_uri(query=query, uri=uri)
-        elif dataset == 'play_information':
-            query = "SELECT gamekey, game_date, playid, yardline, quarter, play_type, poss_team, score_home_visiting FROM play_information"
-            df = pl.read_database_uri(query=query, uri=uri)
-        elif dataset == 'punt_data':
-            query = "SELECT gsisid, position FROM punt_data"
-            df = pl.read_database_uri(query=query, uri=uri) 
-        elif dataset == 'role_data':
-            query = "SELECT gamekey , playid , gsisid , role FROM role_data"
-            df = pl.read_database_uri(query=query, uri=uri)
-        elif dataset == 'video_review':
-            query = "SELECT gamekey, playid, gsisid, player_activity_derived, primary_impact_type, primary_partner_activity_derived, primary_partner_gsisid FROM video_review"
+        elif dataset == 'concussion':
+            query = "SELECT * FROM descriptive_data"
             df = pl.read_database_uri(query=query, uri=uri)
         elif dataset == 'ngs_data':
             query = "SELECT gamekey, playid, gsisid, time, x, y, dis, o, dir, event FROM ngs_data"
@@ -83,7 +71,63 @@ def data_writer(df, database, new_table_name):
 
 
 
-    # This creates an event enum for the Data Shrinker 
+def data_shrinker(df, verbose=True):
+    import polars as pl
+    import numpy as np
+    """
+    Optimize memory usage of a Polars dataframe for both categorical and numeric data.
+    """
+    start_mem = df.estimated_size("mb")
+    if verbose:
+        print(f'Memory usage of dataframe is {start_mem:.2f} MB')
+
+    # Create the event enum
+    event_enum = create_event_enum()
+
+    for col in df.columns:
+        col_type = df[col].dtype
+
+        if col_type in [pl.Int8, pl.Int16, pl.Int32, pl.Int64, pl.Float32, pl.Float64]:
+            # Handle missing values
+            if df[col].null_count() > 0:
+                c_min = df[col].min() if df[col].min() is not None else float('nan')
+                c_max = df[col].max() if df[col].max() is not None else float('nan')
+            else:
+                c_min = df[col].min()
+                c_max = df[col].max()
+
+            if col_type.is_integer():
+                if c_min >= np.iinfo(np.int8).min and c_max <= np.iinfo(np.int8).max:
+                    df = df.with_columns(pl.col(col).cast(pl.Int8))
+                elif c_min >= np.iinfo(np.int16).min and c_max <= np.iinfo(np.int16).max:
+                    df = df.with_columns(pl.col(col).cast(pl.Int16))
+                elif c_min >= np.iinfo(np.int32).min and c_max <= np.iinfo(np.int32).max:
+                    df = df.with_columns(pl.col(col).cast(pl.Int32))
+                else:
+                    df = df.with_columns(pl.col(col).cast(pl.Int64))
+            else:
+                if c_min >= np.finfo(np.float32).min and c_max <= np.finfo(np.float32).max:
+                    df = df.with_columns(pl.col(col).cast(pl.Float32))
+                else:
+                    df = df.with_columns(pl.col(col).cast(pl.Float64))
+
+        elif col_type == pl.Utf8:
+            if col == "event":  # Check if the column is 'event'
+                # Clean the event column by stripping whitespace
+                df = df.with_columns(pl.col(col).str.strip_chars().cast(event_enum))  # Cast to Enum
+            elif col != "PlayKey" and df[col].n_unique() / len(df) < 0.5:  # If less than 50% unique values
+                df = df.with_columns(pl.col(col).cast(pl.Categorical))
+
+    end_mem = df.estimated_size("mb")
+    if verbose:
+        print(f'Memory usage after optimization is: {end_mem:.2f} MB')
+        print(f'Decreased by {100 * (start_mem - end_mem) / start_mem:.1f}%')
+
+    return df
+
+
+
+  # This creates an event enum for the Data Shrinker 
 
 def create_event_enum():
     import polars as pl
@@ -173,58 +217,3 @@ def create_event_enum():
       ,  "xp_fake"
       ,  "NULL"
     ])
-
-def data_shrinker(df, verbose=True):
-    import polars as pl
-    import numpy as np
-    """
-    Optimize memory usage of a Polars dataframe for both categorical and numeric data.
-    """
-    start_mem = df.estimated_size("mb")
-    if verbose:
-        print(f'Memory usage of dataframe is {start_mem:.2f} MB')
-
-    # Create the event enum
-    event_enum = create_event_enum()
-
-    for col in df.columns:
-        col_type = df[col].dtype
-
-        if col_type in [pl.Int8, pl.Int16, pl.Int32, pl.Int64, pl.Float32, pl.Float64]:
-            # Handle missing values
-            if df[col].null_count() > 0:
-                c_min = df[col].min() if df[col].min() is not None else float('nan')
-                c_max = df[col].max() if df[col].max() is not None else float('nan')
-            else:
-                c_min = df[col].min()
-                c_max = df[col].max()
-
-            if col_type.is_integer():
-                if c_min >= np.iinfo(np.int8).min and c_max <= np.iinfo(np.int8).max:
-                    df = df.with_columns(pl.col(col).cast(pl.Int8))
-                elif c_min >= np.iinfo(np.int16).min and c_max <= np.iinfo(np.int16).max:
-                    df = df.with_columns(pl.col(col).cast(pl.Int16))
-                elif c_min >= np.iinfo(np.int32).min and c_max <= np.iinfo(np.int32).max:
-                    df = df.with_columns(pl.col(col).cast(pl.Int32))
-                else:
-                    df = df.with_columns(pl.col(col).cast(pl.Int64))
-            else:
-                if c_min >= np.finfo(np.float32).min and c_max <= np.finfo(np.float32).max:
-                    df = df.with_columns(pl.col(col).cast(pl.Float32))
-                else:
-                    df = df.with_columns(pl.col(col).cast(pl.Float64))
-
-        elif col_type == pl.Utf8:
-            if col == "event":  # Check if the column is 'event'
-                # Clean the event column by stripping whitespace
-                df = df.with_columns(pl.col(col).str.strip_chars().cast(event_enum))  # Cast to Enum
-            elif col != "PlayKey" and df[col].n_unique() / len(df) < 0.5:  # If less than 50% unique values
-                df = df.with_columns(pl.col(col).cast(pl.Categorical))
-
-    end_mem = df.estimated_size("mb")
-    if verbose:
-        print(f'Memory usage after optimization is: {end_mem:.2f} MB')
-        print(f'Decreased by {100 * (start_mem - end_mem) / start_mem:.1f}%')
-
-    return df
-

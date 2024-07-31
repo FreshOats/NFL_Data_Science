@@ -3,7 +3,7 @@
 # This will take about 3 minutes to run
 
 
-def transform_data():
+def transform_injury_data():
     from DataHandler import data_loader, data_shrinker, data_writer
 
     # Transform the tracking data
@@ -24,8 +24,6 @@ def transform_data():
 
 
 
-
-
 #############################################
 def calculate_angle_difference(angle1, angle2):
     import numpy as np
@@ -43,8 +41,8 @@ def angle_corrector(df):
     Make corrections to angles to reduce fringe errors at 360
     """
     df = df.with_columns([
-        ((pl.col("dir") + 180) % 360 - 180).alias("dir"),
-        ((pl.col("o") + 180) % 360 - 180).alias("o")
+        ((pl.col("dir") + 180) % 360 - 180).alias("dir")
+        , ((pl.col("o") + 180) % 360 - 180).alias("o")
     ]).with_columns(
         (calculate_angle_difference(pl.col("dir"), pl.col("o"))).abs().round(2).alias("angle_diff")
         )
@@ -61,40 +59,39 @@ def dynamics_calculator(df):
     of motion, velocity in x and y components, and the angular velocities 
     of the direction of motion and orientations 
     """
-
+    
     df = df.with_columns([
         # Pre-calculate shifted values
-        pl.col("x").shift(1).over("PlayKey").alias("prev_x"),
-        pl.col("y").shift(1).over("PlayKey").alias("prev_y"),
-        pl.col("time").shift(1).over("PlayKey").alias("prev_time"),
-        pl.col("dir").shift(1).over("PlayKey").alias("prev_dir"),
-        pl.col("o").shift(1).over("PlayKey").alias("prev_o")
+        pl.col("x").shift(1).over("PlayKey").alias("prev_x")
+        , pl.col("y").shift(1).over("PlayKey").alias("prev_y")
+        , pl.col("time").shift(1).over("PlayKey").alias("prev_time")
+        , pl.col("dir").shift(1).over("PlayKey").alias("prev_dir")
+        , pl.col("o").shift(1).over("PlayKey").alias("prev_o")
     ]).with_columns([
         # Calculate time difference
-        (pl.col("time") - pl.col("prev_time")).alias("dt"),
+        (pl.col("time") - pl.col("prev_time")).alias("dt")
         # Calculate x and y differences
-        (pl.col("x") - pl.col("prev_x")).alias("dx"),
-        (pl.col("y") - pl.col("prev_y")).alias("dy")
+        , (pl.col("x") - pl.col("prev_x")).alias("dx")
+        , (pl.col("y") - pl.col("prev_y")).alias("dy")
     ]).with_columns([
         # Calculate displacement
         ((pl.col("dx")**2 + pl.col("dy")**2)**0.5).alias("dist")
     ]).with_columns([
         # Calculate speed
-        (pl.col("dist") / pl.col("dt")).alias("speed"),
+        (pl.col("dist") / pl.col("dt")).alias("speed")
         # Calculate direction
-        (np.degrees(np.arctan2(pl.col("dx"), pl.col("dy")))).alias("direction"),
+        , (np.degrees(np.arctan2(pl.col("dx"), pl.col("dy")))).alias("direction")
         # Calculate velocity components
-        (pl.col("dx") / pl.col("dt")).alias("vx"),
-        (pl.col("dy") / pl.col("dt")).alias("vy"),
+        , (pl.col("dx") / pl.col("dt")).alias("vx")
+        , (pl.col("dy") / pl.col("dt")).alias("vy")
         # Calculate angular velocities
-        ((pl.col("dir") - pl.col("prev_dir")) / pl.col("dt")).alias("omega_dir"),
-        ((pl.col("o") - pl.col("prev_o")) / pl.col("dt")).alias("omega_o")
+        , ((pl.col("dir") - pl.col("prev_dir")) / pl.col("dt")).alias("omega_dir")
+        , ((pl.col("o") - pl.col("prev_o")) / pl.col("dt")).alias("omega_o")
     ]).with_columns([
         ((pl.col("omega_dir") - pl.col("omega_o")).abs()).alias("d_omega")
     ]).drop([
         "prev_x", "prev_y", "prev_time", "prev_dir", "prev_o", "dt", "dx", "dy"
     ]).drop_nulls()
-
 
     return df
 
@@ -115,10 +112,10 @@ def angle_corrector(df):
     Make corrections to angles to reduce fringe errors at 360
     """
     df = df.with_columns([
-        ((pl.col("dir") + 180) % 360 - 180).alias("dir"),
-        ((pl.col("o") + 180) % 360 - 180).alias("o")
-    ]).with_columns(
-        (calculate_angle_difference(pl.col("dir"), pl.col("o"))).abs().round(2).alias("angle_diff")
+        ((pl.col("dir") + 180) % 360 - 180).alias("dir")
+        , ((pl.col("o") + 180) % 360 - 180).alias("o")
+        ]).with_columns(
+            (calculate_angle_difference(pl.col("dir"), pl.col("o"))).abs().round(2).alias("angle_diff")
         )
     
     return df
@@ -127,50 +124,55 @@ def angle_corrector(df):
 def path_calculator(df):
     import polars as pl
     # Calculate total distance and displacement for each PlayKey
+    # Calculate total distance and displacement for each PlayKey
     result = df.select([
-        "PlayKey",
-        pl.col("dist").sum().over("PlayKey").alias("distance"),
-        pl.col("x").first().over("PlayKey").alias("start_x"),
-        pl.col("y").first().over("PlayKey").alias("start_y"),
-        pl.col("x").last().over("PlayKey").alias("end_x"),
-        pl.col("y").last().over("PlayKey").alias("end_y"), 
-        pl.col("angle_diff").max().over("PlayKey").alias("max_angle_diff"),
-        pl.col("angle_diff").mean().over("PlayKey").alias("mean_angle_diff"), 
-        pl.col("speed").max().over("PlayKey").alias("max_speed"),
-        pl.col("speed").mean().over("PlayKey").alias("mean_speed"),
-        pl.col("omega_dir").max().over("PlayKey").alias("max_omega_dir"),
-        pl.col("omega_dir").mean().over("PlayKey").alias("mean_omega_dir"),
-        pl.col("omega_o").max().over("PlayKey").alias("max_omega_o"),
-        pl.col("omega_o").mean().over("PlayKey").alias("mean_omega_o"), 
-        pl.col("d_omega").max().over("PlayKey").alias("max_d_omega"),
-        pl.col("d_omega").mean().over("PlayKey").alias("mean_d_omega") 
-    ]).unique(subset=["PlayKey"])
+        "PlayKey"
+        , pl.col("dist").sum().over("PlayKey").alias("distance")
+        , pl.col("x").first().over("PlayKey").alias("start_x")
+        , pl.col("y").first().over("PlayKey").alias("start_y")
+        , pl.col("x").last().over("PlayKey").alias("end_x")
+        , pl.col("y").last().over("PlayKey").alias("end_y")
+        , pl.col("angle_diff").max().over("PlayKey").alias("max_angle_diff")
+        , pl.col("angle_diff").mean().over("PlayKey").alias("mean_angle_diff")
+        , pl.col("speed").max().over("PlayKey").alias("max_speed")
+        , pl.col("speed").mean().over("PlayKey").alias("mean_speed")
+        , pl.col("omega_dir").max().over("PlayKey").alias("max_omega_dir")
+        , pl.col("omega_dir").mean().over("PlayKey").alias("mean_omega_dir")
+        , pl.col("omega_o").max().over("PlayKey").alias("max_omega_o")
+        , pl.col("omega_o").mean().over("PlayKey").alias("mean_omega_o")
+        , pl.col("d_omega").max().over("PlayKey").alias("max_d_omega")
+        , pl.col("d_omega").mean().over("PlayKey").alias("mean_d_omega")
+        ]).unique(subset=["PlayKey"])
+
 
     # Calculate the displacement
     result = result.with_columns([
         (((pl.col("end_x") - pl.col("start_x"))**2 + 
           (pl.col("end_y") - pl.col("start_y"))**2)**0.5)
         .alias("displacement")
-    ]).with_columns([
-        (pl.col("distance") - pl.col("displacement")).alias("path_diff")
-    ])
+        ]).with_columns([
+            (pl.col("distance") - pl.col("displacement")).alias("path_diff")
+        ])
 
      
     # Select only the required columns
-    result = result.select(['PlayKey',
-        'distance',
-        'displacement',
-        'path_diff',
-        'max_angle_diff',
-        'mean_angle_diff',
-        'max_speed',
-        'mean_speed',
-        'max_omega_dir',
-        'mean_omega_dir',
-        'max_omega_o',
-        'mean_omega_o',
-        'max_d_omega',
-        'mean_d_omega']).sort("PlayKey")
+    result = result.select([
+        'PlayKey'
+        , 'Distance'
+        , 'Displacement'
+        , 'Path_Diff'
+        , 'Max_Angle_Diff'
+        , 'Mean_Angle_Diff'
+        , 'Max_Speed'
+        , 'Mean_Speed'
+        , 'Max_omega_dir'
+        , 'Mean_omega_dir'
+        , 'Max_omega_o'
+        , 'Mean_omega_o'
+        , 'Max_d_omega'
+        , 'Mean_d_omega'
+    ]).sort("PlayKey")
+
 
     return result
 
