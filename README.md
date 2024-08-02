@@ -41,3 +41,26 @@ The code that establishes the databases and tables are in the following files:
     Issues: 
     NGS_Data - when importing the data, at least one of the INT values was entered as a float, so this will need to be changed back to INT. 
     Video_Review - one of the rows includes "Unknown" in almost every column, making it such that the primary_partner_gsisid is included as VARCHAR instead of INT again.  
+
+
+    **************
+
+    ## Biomechanics
+        I really want to look at the moments of impact, or critical moments in the play when the player stops. I will have the velocity in the moments just before and at the stopping time, which will allow me to calculate the force, work and power. I can then use these metrics to compare to known quantities that can result in such injuries, and correlate the amount of force with the duration of injury. 
+
+    - Find a 2016, 2017 rosters to get player weights per position
+    - if possible, get heights and shoulder width dimensions. 
+
+    Moment of Inertia of a rotating person as they turn on the field will require the radius from their shoulder to neck and their mass. 
+
+    If I know their impact is hitting the ground, I can calculate the moment of inertia based on their height rotating from 2/3 height CM to the ground. Will need to consult any notes or videos about each play. 
+
+    
+
+    ### Beautiful Soup
+    I'm going to have to scrape
+
+    https://www.espn.com/nfl/players
+
+    to get the heights and weights of players from this season to calculate averages. Or I can just trust the averages already present, though not for the 2016 and 2017 seasons. Whatever. 
+    

@@ -41,7 +41,7 @@ def data_loader(dataset, database='nfl_surface'): # Read in raw data from SQL da
             query = "SELECT * FROM descriptive_data"
             df = pl.read_database_uri(query=query, uri=uri)
         elif dataset == 'ngs_data':
-            query = "SELECT gamekey, playid, gsisid, time, x, y, dis, o, dir, event FROM ngs_data"
+            query = "SELECT gamekey, playid, gsisid, time, x, y, dis, o, dir, event FROM ngs_data LIMIT 10000"
             df = pl.read_database_uri(query=query, uri=uri)
         return df
     
@@ -215,5 +215,4 @@ def create_event_enum():
       ,  "two_point_conversion"
       ,  "two_point_play"
       ,  "xp_fake"
-      ,  "NULL"
     ])

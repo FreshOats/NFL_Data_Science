@@ -12,7 +12,7 @@ def clean_injuries():
     quals = table_joiner() 
     quals = column_capitalizer(quals, df_name='quals')
     quals = stadium_cleaner(quals, df_name='quals')
-    quals = weather_cleaner(quals, df_name='quals')
+    quals = weather_cleaner(quals)
     quals = injury_cleaner(quals)
     data_writer(quals, database, "qualitative")
     print("Play and Injury Data has been cleaned and uploaded as qualitative")
@@ -27,7 +27,7 @@ def clean_concussions():
     df = data_loader(database='nfl_concussion', dataset='concussion')
     df = column_capitalizer(df, 'concussion')
     df = stadium_cleaner(df, 'concussion')
-    df = weather_cleaner(df, 'concussion')
+    df = weather_cleaner(df)
     df = turf_cleaner(df)
     df = df.filter(pl.col("Game_Date").is_not_null())
     df = score_splitter(df)
@@ -109,6 +109,7 @@ def column_capitalizer(df, df_name):
         , 'primary_partner_activity_derived': 'Primary_Partner_Activity_Derived'
         , 'primary_partner_gsisid': 'Primary_Partner_Gsisid'
         }
+
 
     df = df.rename(columns)
     return df
@@ -203,11 +204,10 @@ def stadium_cleaner(df, df_name):
     return df
 
 # Cleans up the weather data from having a lot of different but similar to a few categories
-def weather_cleaner(df, df_name):
+def weather_cleaner(df):
      import polars as pl
      
-     if df_name == 'quals':
-        weather_dict = {
+     weather_dict = {
             'Clear and warm': 'Clear'
             , 'Mostly Cloudy': 'Cloudy'
             , 'Sunny': 'Clear'
@@ -271,77 +271,34 @@ def weather_cleaner(df, df_name):
             , 'Cloudy with periods of rain, thunder possible. Winds shifting to WNW, 10-20 mph.': 'Windy'
             , 'Rain shower': 'Rain'
             , 'Cold': 'Clear'
-        }
-
-        
-     elif df_name == 'concussion':
-        weather_dict = {
-            'Mostly Cloudy': 'Cloudy'
-            , 'Sunny': 'Clear'
-            , 'Rain': 'Rain'
-            , 'cloudy': 'Cloudy'
-            , 'Partly Cloudy': 'Cloudy'
-            , 'Clear': 'Clear'
-            , 'Cloudy': 'Cloudy'
-            , 'Showers': 'Rain'
-            , 'Clear skies': 'Clear'
-            , 'Mostly cloudy': 'Cloudy'
-            , 'Controlled Climate': 'Clear'
-            , 'Partly cloudy': 'Cloudy'
-            , 'Clear Skies': 'Clear'
-            , 'Fair': 'Clear'
-            , 'Mostly Coudy': 'Cloudy'
-            , 'Partly sunny': 'Clear'
             , 'Partly cloudy, lows to upper 50s.': 'Cloudy'
-            , 'Sunny and warm': 'Clear'
             , 'Scattered thunderstorms': 'Rain'
-            , 'Indoor': 'Indoor'
-            , 'Mostly Sunny': 'Clear'
-            , '30% Chance of Rain': 'Rain'
-            , 'Light Rain': 'Rain'
             , 'CLEAR': 'Clear'
             , 'Partly CLoudy': 'Cloudy'
-            , 'Partly Sunny': 'Clear'
             , 'Chance of Showers': 'Rain'
             , 'Snow showers': 'Snow'
-            , 'Cloudy, chance of rain': 'Cloudy'
             , 'Clear and Cold': 'Clear'
-            , 'Party Cloudy': 'Cloudy'
-            , 'Indoors': 'Indoor'
             , 'Cloudy with rain': 'Rain'
             , 'Sunny intervals': 'Clear'
             , 'Clear and cool': 'Clear'
-            , 'Cold': 'Cloudy'
             , 'Cloudy, Humid, Chance of Rain': 'Rain'
-            , 'Cloudy and cold': 'Cloudy'
             , 'Cloudy and Cold': 'Cloudy'
-            , 'Cloudy, fog started developing in 2nd quarter': 'Hazy/Fog'
             , 'Cloudy with patches of fog': 'Hazy/Fog'
             , 'Controlled': 'Indoor'
             , 'Sunny and Clear': 'Clear'
-            , 'Clear and warm': 'Clear'
-            , 'Cloudy, Rain': 'Rain'
             , 'Cloudy with Possible Stray Showers/Thundershowers': 'Rain'
             , 'Suny': 'Clear'
-            , 'Sunny Skies': 'Clear'
-            , 'Heavy lake effect snow': 'Snow'
-            , 'Sun & clouds': 'Cloudy'
             , 'T-Storms': 'Rain'
             , 'Sunny and cool': 'Clear'
-            , 'Snow': 'Snow'
-            , 'Coudy': 'Cloudy'
-            , 'Cloudy with periods of rain, thunder possible. Winds shifting to WNW, 10-20 mph.': 'Windy'
-            , 'Sunny, highs to upper 80s': 'Clear'
             , 'Cloudy, steady temps': 'Cloudy'
             , 'Hazy, hot and humid': 'Hazy/Fog'
             , 'Sunny Intervals': 'Clear'
-            , 'Cloudy, light snow accumulating 1-3"': 'Cloudy'
             , 'Partly Cloudy, Chance of Rain 80%': 'Rain'
             , 'Mostly Clear. Gusting ot 14.': 'Windy'
             , 'Mostly CLoudy': 'Cloudy'
             , 'Snow Showers, 3 to 5 inches expected.': 'Snow'
-            , 'Rain likely, temps in low 40s.': 'Rain'
-        }
+            }
+
 
 
 
