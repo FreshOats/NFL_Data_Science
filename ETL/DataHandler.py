@@ -15,7 +15,7 @@ def data_loader(dataset, database='nfl_surface'): # Read in raw data from SQL da
     uri = f"postgresql://postgres:{db_password}@127.0.0.1:5432/{database}"
     del db_password
     
-    valid_datasets = ['clean_quals', 'qualitative', 'tracking', 'injuries', 'plays', 'ngs_data', 'concussion']
+    valid_datasets = ['clean_quals', 'qualitative', 'tracking', 'injuries', 'plays', 'ngs_data', 'concussion', 'positions']
     if dataset not in valid_datasets:
         raise ValueError(f"Invalid dataset name '{dataset}'. Valid options are: {valid_datasets}")
 
@@ -41,9 +41,13 @@ def data_loader(dataset, database='nfl_surface'): # Read in raw data from SQL da
             query = "SELECT * FROM descriptive_data"
             df = pl.read_database_uri(query=query, uri=uri)
         elif dataset == 'ngs_data':
-            query = "SELECT gamekey, playid, gsisid, time, x, y, dis, o, dir, event FROM ngs_data LIMIT 10000"
+            query = "SELECT gamekey, playid, gsisid, time, x, y, dis, o, dir, event FROM ngs_data WHERE gsisid IS NOT NULL LIMIT 10000"
+            df = pl.read_database_uri(query=query, uri=uri)
+        elif dataset == 'positions':
+            query = "SELECT gsisid, position FROM punt_data"
             df = pl.read_database_uri(query=query, uri=uri)
         return df
+    
     
     except Exception as e: 
         print(f"An error occurred while loading the dataset '{dataset}': {e}")

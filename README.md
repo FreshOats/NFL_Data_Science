@@ -33,6 +33,8 @@ The code that establishes the databases and tables are in the following files:
 
     After adding the data to SQL, the unnecessary columns were removed and the injuryrecord and playlist tables were joined and saved as a new table, Qualitative, since upon EDA it was noted that there would need to be substantial programmatic changes to those tables that would be ideal to do in transformation on Python prior to joining with the tracking data. 
 
+    NOTE:  Body mass distribution; I came across an estimate that 30%-40% of the body mass is waist and below. Since NFL players have a lot more upper body bulk, I will be using the 30% estimate. This will be necessary in the calculation of torque of the upper body with respect to the lower body. 
+
     
 
 #### Concussion.sql
@@ -42,6 +44,17 @@ The code that establishes the databases and tables are in the following files:
     NGS_Data - when importing the data, at least one of the INT values was entered as a float, so this will need to be changed back to INT. 
     Video_Review - one of the rows includes "Unknown" in almost every column, making it such that the primary_partner_gsisid is included as VARCHAR instead of INT again.  
 
+    NOTE: there are 1429 records in the ngs data that have no associated gsisid, so these will be dropped, since they're not associated with a known player. 
+
+    NOTE: All of the players that sustained concussions have known positions and gsisid values. I am going to remove any players with unknown positions
+
+    There were 37 injuries catalogued in the video_review
+    There were 2442 distinct gsisid across both seasons, so this includes the players who played both or only one season, since there are only about 1700 players per season. 
+
+    However... in the ngs_data, in 2016 there were 2542 unique gsisid
+    and in 2017 there were 2890 unique gsisid
+
+    I have no way of accounting for these values regarding their positions and thus their weights... so I'm going to filter these out. 
 
     **************
 
@@ -55,12 +68,10 @@ The code that establishes the databases and tables are in the following files:
 
     If I know their impact is hitting the ground, I can calculate the moment of inertia based on their height rotating from 2/3 height CM to the ground. Will need to consult any notes or videos about each play. 
 
+    The most common measure for assessing concussions is Impulse (F*delta_t), which we have. 
+
     
 
-    ### Beautiful Soup
-    I'm going to have to scrape
+    
 
-    https://www.espn.com/nfl/players
-
-    to get the heights and weights of players from this season to calculate averages. Or I can just trust the averages already present, though not for the 2016 and 2017 seasons. Whatever. 
     
