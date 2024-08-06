@@ -3,12 +3,12 @@
 
 def data_loader(dataset, database='nfl_surface'): # Read in raw data from SQL database
     #Options are 'quals', 'clean_quals', 
-    import polars as pl
-    import numpy as np
-    import sqlalchemy as db
-    from sqlalchemy.orm import Session
-    from sqlalchemy import create_engine
-    import psycopg2
+    import polars as pl  # type: ignore
+    import numpy as np # type: ignore
+    import sqlalchemy as db # type: ignore
+    from sqlalchemy.orm import Session # type: ignore
+    from sqlalchemy import create_engine # type: ignore
+    import psycopg2 # type: ignore
 
     # Make connection to the database
     from config import db_password
@@ -72,11 +72,11 @@ def data_loader(dataset, database='nfl_surface'): # Read in raw data from SQL da
 
 def data_writer(df, database, new_table_name):
     # Write the Cleaned data back to the SQL server, where this database will be retrieved for future analyses
-    import sqlalchemy as db
-    import pandas as pd
-    from sqlalchemy.orm import Session
-    from sqlalchemy import create_engine
-    import psycopg2
+    import sqlalchemy as db # type: ignore
+    import pandas as pd # type: ignore
+    from sqlalchemy.orm import Session # type: ignore
+    from sqlalchemy import create_engine # type: ignore
+    import psycopg2 # type: ignore
     from config import db_password
     uri = f"postgresql://postgres:{db_password}@127.0.0.1:5432/{database}"
     del db_password
@@ -91,8 +91,8 @@ def data_writer(df, database, new_table_name):
 
 
 def data_shrinker(df, verbose=True):
-    import polars as pl
-    import numpy as np
+    import polars as pl # type: ignore
+    import numpy as np # type: ignore
     """
     Optimize memory usage of a Polars dataframe for both categorical and numeric data.
     """
@@ -149,7 +149,7 @@ def data_shrinker(df, verbose=True):
   # This creates an event enum for the Data Shrinker 
 
 def create_event_enum():
-    import polars as pl
+    import polars as pl # type: ignore
     """
     Create an Enum for known events.
     """

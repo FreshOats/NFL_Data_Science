@@ -5,7 +5,7 @@
 
 def transform_injury_data(output):
     from DataHandler import data_loader, data_shrinker, data_writer
-    import polars as pl
+    import polars as pl # type: ignore
 
     valid_outputs = ['tracking', 'summary']
     if output not in valid_outputs:
@@ -45,7 +45,7 @@ def transform_injury_data(output):
        
 def transform_concussion_data(output):
     from DataHandler import data_loader, data_shrinker, data_writer
-    import polars as pl
+    import polars as pl # type: ignore
 
     valid_outputs = ['tracking', 'summary']
     if output not in valid_outputs:
@@ -86,7 +86,7 @@ def transform_concussion_data(output):
 
 #############################################
 def column_corrector(df):
-    import polars as pl
+    import polars as pl # type: ignore
     """
     Add a Play_Time column that acts like the 'time' column did in the injury dataset. 
     Each PlayKey will start at 0.0 and increase by 0.1 for each subsequent record.
@@ -123,7 +123,7 @@ def column_corrector(df):
 
 
 def calculate_angle_difference(angle1, angle2):
-    import numpy as np
+    import numpy as np # type: ignore
     """
     Calculate the smallest angle difference between two angles 
     using trigonometric functions, accounting for edge cases.
@@ -133,7 +133,7 @@ def calculate_angle_difference(angle1, angle2):
     return np.degrees(np.arctan2(sin_diff, cos_diff))
 
 def angle_corrector(df):
-    import polars as pl
+    import polars as pl # type: ignore
     """
     Make corrections to angles to reduce fringe errors at 360
     """
@@ -148,7 +148,7 @@ def angle_corrector(df):
 
 
 def body_builder(df, df_name):
-    import polars as pl
+    import polars as pl # type: ignore
     from DataHandler import data_loader
 
     body_data = pl.DataFrame({
@@ -208,8 +208,8 @@ def body_builder(df, df_name):
 
 
 def velocity_calculator(df):
-    import numpy as np
-    import polars as pl
+    import numpy as np # type: ignore
+    import polars as pl # type: ignore
     """
     Using the (X,Y) and time columns, perform calculations based on the 
     difference between two rows to find displacement, speed, direction 
@@ -254,8 +254,8 @@ def velocity_calculator(df):
 
 
 def impulse_calculator(df):
-    import numpy as np
-    import polars as pl
+    import numpy as np # type: ignore
+    import polars as pl # type: ignore
     """
     Using the (X,Y) and time columns, perform calculations based on the velocities and changes 
     in velocites along with player mass to get the momentum and impulse, a measure that can 
@@ -310,7 +310,7 @@ def impulse_calculator(df):
 
 
 def path_calculator(df):
-    import polars as pl
+    import polars as pl # type: ignore
     # This provides a summary table that can be integrated with the qualitative data
 
     # Calculate total distance and displacement for each PlayKey
