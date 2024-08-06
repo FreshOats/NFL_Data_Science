@@ -14,8 +14,11 @@ def data_loader(dataset, database='nfl_surface'): # Read in raw data from SQL da
     from config import db_password
     uri = f"postgresql://postgres:{db_password}@127.0.0.1:5432/{database}"
     del db_password
+    pl.set_random_seed(666)
     
-    valid_datasets = ['clean_quals', 'qualitative', 'tracking', 'injuries', 'plays', 'ngs_data', 'concussion', 'positions']
+
+    
+    valid_datasets = ['clean_quals', 'qualitative', 'tracking', 'injuries', 'plays', 'play_positions', 'ngs_data', 'concussion', 'positions']
     if dataset not in valid_datasets:
         raise ValueError(f"Invalid dataset name '{dataset}'. Valid options are: {valid_datasets}")
 
@@ -28,20 +31,32 @@ def data_loader(dataset, database='nfl_surface'): # Read in raw data from SQL da
             query = "SELECT * FROM qualitative" 
             df = pl.read_database_uri(query=query, uri=uri)
         elif dataset == 'plays':
-            query = "SELECT playkey, rosterposition, stadiumtype, fieldtype, temperature, weather, playtype FROM plays"
+            query = "SELECT playkey, position, stadiumtype, fieldtype, temperature, weather, playtype FROM plays"
+            df = pl.read_database_uri(query=query, uri=uri)
+        elif dataset == 'play_positions':
+            query = "SELECT playkey, position FROM plays"
             df = pl.read_database_uri(query=query, uri=uri)
         elif dataset == 'injuries':
             query = "SELECT playkey, bodypart, DM_M1, DM_M7, DM_M28, DM_M42 FROM injuries"
             df = pl.read_database_uri(query=query, uri=uri)
         elif dataset == 'tracking':
             scan = pl.scan_csv("F:/Data/nfl-playing-surface-analytics/PlayerTrackData.csv")
-            df = scan.collect(streaming=True, infer_schema_length=10000)
+            df = scan.head(10000).collect()
+            # df = scan.collect(streaming=True, infer_schema_length=10000)
         
         elif dataset == 'concussion':
             query = "SELECT * FROM descriptive_data"
             df = pl.read_database_uri(query=query, uri=uri)
+        elif dataset == 'clean_quals':
+            query = "SELECT * FROM clean_data"
+            df = pl.read_database_uri(query=query, uri=uri)
         elif dataset == 'ngs_data':
-            query = "SELECT gamekey, playid, gsisid, time, x, y, dis, o, dir, event FROM ngs_data WHERE gsisid IS NOT NULL LIMIT 10000"
+            query = """ SELECT gamekey, playid, gsisid, time, x, y, dis, o, dir, event 
+                        FROM ngs_data 
+                        WHERE gsisid IS NOT NULL 
+                        ORDER BY gamekey
+                        LIMIT 10000
+                    """
             df = pl.read_database_uri(query=query, uri=uri)
         elif dataset == 'positions':
             query = "SELECT gsisid, position FROM punt_data"

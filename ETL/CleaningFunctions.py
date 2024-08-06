@@ -50,7 +50,7 @@ def table_joiner():
         plays.join(injuries, on="playkey", how='left')
         .select([
             pl.col("playkey")
-            , pl.col("rosterposition")
+            , pl.col("position")
             , pl.col("stadiumtype")
             , pl.col("fieldtype")
             , pl.col("temperature")
@@ -72,7 +72,7 @@ def column_capitalizer(df, df_name):
     if df_name == 'quals':
         columns = {
         'playkey': "PlayKey"
-        , 'rosterposition': 'Position'
+        , 'position': 'Position'
         , 'stadiumtype': 'Stadium_Type'
         , 'fieldtype': 'Field_Type'
         , 'temperature': 'Temperature'
@@ -87,7 +87,7 @@ def column_capitalizer(df, df_name):
 
     elif df_name == 'concussion':
         columns = {
-        'playkey': 'Playkey'
+        'playkey': 'PlayKey'
         , 'position': 'Position'
         , 'role': 'Role'
         , 'game_date': 'Game_Date'
@@ -394,18 +394,18 @@ def score_splitter(df):
     return df
 
 
-def weight_gainer(df):
-    '''
-    Adds body parameters weight, height, and chest radius per player position
-    '''
-    import polars as pl
+# def weight_gainer(df):
+#     '''
+#     Adds body parameters weight, height, and chest radius per player position
+#     '''
+#     import polars as pl
 
-    body_data = {
-    "Position_Code": ["QB", "RB", "FB", "WR", "TE", "T", "G", "C", "DE", "DT", "NT", "LB", "OLB", "MLB", "CB", "S", "K", "P", "SS", "ILB", "FS", "LS", "DB"]
-    , "Position_Name": ["Quarterback", "Running Back", "Fullback", "Wide Receiver", "Tight End", "Tackle", "Guard", "Center", "Defensive End", "Defensive Tackle", "Nose Tackle", "Linebacker", "Outside Linebacker", "Middle Linebacker", "Cornerback", "Safety", "Kicker", "Punter", "Strong Safety", "Inside Linebacker", "Free Safety", "Long Snapper", "Defensive Back"]
-    , "Height_m": [1.91, 1.79, 1.85, 1.88, 1.96, 1.97, 1.90, 1.87, 1.97, 1.92, 1.88, 1.90, 1.90, 1.87, 1.82, 1.84, 1.83, 1.88, 1.84, 1.90, 1.84, 1.88, 1.82]
-    , "Weight_kg": [102.1, 95.3, 111.1, 90.7, 114.6, 140.6, 141.8, 136.1, 120.2, 141.8, 152.0, 110.0, 108.9, 113.4, 87.4, 95.9, 92.08, 97.52, 95.9, 110.0, 95.9, 108.86, 87.4]
-    , "Chest_rad_m": [0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191]
-    }
+#     body_data = {
+#     "Position_Code": ["QB", "RB", "FB", "WR", "TE", "T", "G", "C", "DE", "DT", "NT", "LB", "OLB", "MLB", "CB", "S", "K", "P", "SS", "ILB", "FS", "LS", "DB"]
+#     , "Position_Name": ["Quarterback", "Running Back", "Fullback", "Wide Receiver", "Tight End", "Tackle", "Guard", "Center", "Defensive End", "Defensive Tackle", "Nose Tackle", "Linebacker", "Outside Linebacker", "Middle Linebacker", "Cornerback", "Safety", "Kicker", "Punter", "Strong Safety", "Inside Linebacker", "Free Safety", "Long Snapper", "Defensive Back"]
+#     , "Height_m": [1.91, 1.79, 1.85, 1.88, 1.96, 1.97, 1.90, 1.87, 1.97, 1.92, 1.88, 1.90, 1.90, 1.87, 1.82, 1.84, 1.83, 1.88, 1.84, 1.90, 1.84, 1.88, 1.82]
+#     , "Weight_kg": [102.1, 95.3, 111.1, 90.7, 114.6, 140.6, 141.8, 136.1, 120.2, 141.8, 152.0, 110.0, 108.9, 113.4, 87.4, 95.9, 92.08, 97.52, 95.9, 110.0, 95.9, 108.86, 87.4]
+#     , "Chest_rad_m": [0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191]
+#     }
 
     

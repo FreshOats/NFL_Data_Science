@@ -3,40 +3,125 @@
 # This will take about 3 minutes to run
 
 
-def transform_injury_data():
+def transform_injury_data(output):
     from DataHandler import data_loader, data_shrinker, data_writer
+    import polars as pl
 
-    # Transform the tracking data
-    quant = data_loader('tracking')
-    quant = data_shrinker(quant)
-    quant = angle_corrector(quant)
-    quant = velocity_calculator(quant)
-    quant = acceleration_calculator(quant)
-    quant = path_calculator(quant) # Needs to be updated with acceleration data
+    valid_outputs = ['tracking', 'summary']
+    if output not in valid_outputs:
+        raise ValueError(f"Invalid ouptut selection: '{output}'. Valid options are: '{valid_outputs}'")
 
-    # Open and merge the qualitative data
-    quals = data_loader('qualitative')
-    qual_quant = qual_quant_merger(quals, quant)
-    print("Writing all quantitative and qualitative summary data to the database as summary_data")
-    data_writer(qual_quant, 'nfl_surface', 'summary_data')
+    try: 
+        # Transform the tracking data
+        quant = data_loader(dataset='tracking', database='nfl_surface')
+        quant = data_shrinker(quant)
+        quant = angle_corrector(quant)
+        quant = body_builder(quant, 'tracking')
+        quant = velocity_calculator(quant)
+        quant = impulse_calculator(quant)
     
-    del quant
-    del quals
+        if output == 'summary':
+            summary = path_calculator(quant)
+            del quant # remove the large table from memory
+            # Open and merge the qualitative data
+            quals = data_loader('qualitative', 'nfl_surface')
+            qual_quant = qual_quant_merger(quals, summary)
+            
+            print("Writing all quantitative and qualitative summary data to the database as summary_data. Wait.")
+            data_writer(qual_quant, 'nfl_surface', 'summary_data')
+            print("Data has been uploaded to the database. Probably.")        
+
+        elif output == 'tracking':
+            # upload the physical data to the database for machine learning
+            print("Writing the transformed table with physical parameters to the database as quantitative")
+            data_writer(quant, 'nfl_surface', 'quantitative')
+            print("Data has been uploaded to the database. Go celebrate!")
+        
+    except Exception as e:
+        print(f"An error occurred with your selection, '{output}': {e}")
+        return None
 
 
-
-def transform_concussion_data():
+       
+def transform_concussion_data(output):
     from DataHandler import data_loader, data_shrinker, data_writer
+    import polars as pl
 
-    # transform the ngs_data
+    valid_outputs = ['tracking', 'summary']
+    if output not in valid_outputs:
+        raise ValueError(f"Invalid ouptut selection: '{output}'. Valid options are: '{valid_outputs}'")
 
+    try: 
+        track = data_loader(dataset='ngs_data', database='nfl_concussion')
+        track = data_shrinker(track)
+        track = column_corrector(track)
+        track = angle_corrector(track)
+        track = body_builder(track, 'ngs_data')
+        track = velocity_calculator(track)
+        track = impulse_calculator(track)
+    
+        if output == 'summary':
+            summary =  path_calculator(track)
+            del track # remove the large table from memory
+            # Open and merge the qualitative data
+            quals = data_loader('clean_quals', 'nfl_concussion')
+            qual_quant = qual_quant_merger(quals, summary)
+            
+            print("Writing all quantitative and qualitative summary data to the database as summary_data. Wait.")
+            data_writer(qual_quant, 'nfl_concussion', 'summary_data')
+            print("Data has been uploaded to the database. Probably.")        
 
-
+        elif output == 'tracking':
+            # upload the physical data to the database for machine learning
+            print("Writing the transformed table with physical parameters to the database as quantitative")
+            data_writer(track, 'nfl_concussion', 'quantitative')
+            print("Data has been uploaded to the database. Good for you!")
+        
+    except Exception as e:
+        print(f"An error occurred with your selection, '{output}': {e}")
+        return None
 
 
 
 
 #############################################
+def column_corrector(df):
+    import polars as pl
+    """
+    Add a Play_Time column that acts like the 'time' column did in the injury dataset. 
+    Each PlayKey will start at 0.0 and increase by 0.1 for each subsequent record.
+    """
+    df = df.with_columns([
+        pl.concat_str([
+            pl.col('gsisid').cast(pl.Int32).cast(pl.Utf8)
+            , pl.lit('-')
+            , pl.col('gamekey').cast(pl.Utf8)
+            , pl.lit('-')
+            , pl.col('playid').cast(pl.Utf8)
+        ]).alias('PlayKey')
+    ])
+     
+    
+    df = df.select([
+        'PlayKey'
+        , 'time'
+        , 'x'
+        , 'y'
+        , 'o'
+        , 'dir'
+        , 'gsisid'
+        ]).rename({"time":"datetime"})
+
+    df = df.sort(['PlayKey', 'datetime'])
+
+    df = df.with_columns(
+        (pl.arange(0, pl.len()) * 0.1).over("PlayKey").alias("time")
+        ).with_columns([pl.col('gsisid').cast(pl.Int32)])  
+    
+    return df
+
+
+
 def calculate_angle_difference(angle1, angle2):
     import numpy as np
     """
@@ -60,6 +145,66 @@ def angle_corrector(df):
         )
     
     return df
+
+
+def body_builder(df, df_name):
+    import polars as pl
+    from DataHandler import data_loader
+
+    body_data = pl.DataFrame({
+        "position": ["QB", "RB", "FB", "WR", "TE", "T", "G", "C", "DE", "DT", "NT", "LB", "OLB", "MLB", "CB", "S", "K", "P", "SS", "ILB", "FS", "LS", "DB"]
+        # , "Position_Name": ["Quarterback", "Running Back", "Fullback", "Wide Receiver", "Tight End", "Tackle", "Guard", "Center", "Defensive End", "Defensive Tackle", "Nose Tackle", "Linebacker", "Outside Linebacker", "Middle Linebacker", "Cornerback", "Safety", "Kicker", "Punter", "Strong Safety", "Inside Linebacker", "Free Safety", "Long Snapper", "Defensive Back"]
+        , "Height_m": [1.91, 1.79, 1.85, 1.88, 1.96, 1.97, 1.90, 1.87, 1.97, 1.92, 1.88, 1.90, 1.90, 1.87, 1.82, 1.84, 1.83, 1.88, 1.84, 1.90, 1.84, 1.88, 1.82]
+        , "Weight_kg": [102.1, 95.3, 111.1, 90.7, 114.6, 140.6, 141.8, 136.1, 120.2, 141.8, 152.0, 110.0, 108.9, 113.4, 87.4, 95.9, 92.08, 97.52, 95.9, 110.0, 95.9, 108.86, 87.4]
+        , "Chest_rad_m": [0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191]
+        })
+
+    valid_df_names = ['ngs_data', 'tracking']
+    if df_name not in valid_df_names:
+        raise ValueError(f"Invalid dataframe name '{df_name}'. Valid options are: {valid_df_names}")
+
+    try: 
+        if df_name == 'ngs_data':
+            position = data_loader(dataset='positions', database='nfl_concussion')
+            position = position.join(
+                body_data
+                , left_on='position'
+                , right_on='position'
+                , how='left'
+                )
+            
+            df = df.join(
+                position
+                , on='gsisid'
+                , how='left'
+                ).drop_nulls(subset=['position'])
+            
+
+        elif df_name == 'tracking':
+            position = data_loader(dataset='play_positions', database='nfl_surface')
+            position = position.join(
+                body_data
+                , left_on='position'
+                , right_on='position'
+                , how='left'
+                )
+
+            df = df.join(
+                position
+                , left_on='PlayKey'
+                , right_on='playkey'
+                , how='left'
+            ).drop_nulls(subset=['position']).drop(['event'])
+
+            
+
+        return df    
+    
+    except Exception as e: 
+        print(f"An error occurred while loading the dataframe '{df_name}': {e}")
+        return None
+
+
 
 
 def velocity_calculator(df):
@@ -107,47 +252,61 @@ def velocity_calculator(df):
         "prev_x", "prev_y", "prev_dir", "prev_o", "dx", "dy", "o_rad", "dir_rad"
     ])
 
-def acceleration_calculator(df): 
-    '''
-    This will require annother process as was done with the velocity_calculator, 
-    only this time, I will be using the changes in velocity along with the changes in time 
-    to find the linear and angular accelerations. 
-    '''
-    def acceleration_calculator(df):
-        import numpy as np
-        import polars as pl
-        """
-        Using the (X,Y) and time columns, perform calculations based on the 
-        difference between two rows to find displacement, speed, direction 
-        of motion, velocity in x and y components, and the angular velocities 
-        of the direction of motion and orientations 
-        """
-        
-        return df.with_columns([
-            # Pre-calculate shifted values for linear and angular velocities
-            pl.col("vx").shift(1).over("PlayKey").alias("prev_vx")
-            , pl.col("vy").shift(1).over("PlayKey").alias("prev_vy")
-            , pl.col("omega_dir").shift(1).over("PlayKey").alias("prev_omega_dir")
-            , pl.col("omega_o").shift(1).over("PlayKey").alias("prev_omega_o")
-        
-        ]).with_columns([
-            # Calculate ax and ay from velocity differences over time
-            ((pl.col("vx") - pl.col("prev_vx")) / 0.1).alias("ax")
-            , ((pl.col("vy") - pl.col("prev_vy")) / 0.1).alias("ay")
-            # Calculate angular accelerations
-            , ((pl.col("omega_dir") - pl.col("prev_omega_dir")) / 0.1).alias("alpha_dir")
-            , ((pl.col("omega_o") - pl.col("prev_omega_o")) / 0.1).alias("alpha_o")
-        ]).drop([
-            "prev_omega_dir", "prev_omega_o", "prev_vx", "prev_vy"
-        ])
 
-def force_calculator(df):
-    '''
-    This will analyze the masses, heights, and shoulder widths of the players per position.
-    Using this information, we can calculate the moment of inertia for any angular data.
-    I would like to show the changes in force as a function of time and see how the balance
-    of the angular and linear forces impact the injury
-    ''' 
+def impulse_calculator(df):
+    import numpy as np
+    import polars as pl
+    """
+    Using the (X,Y) and time columns, perform calculations based on the velocities and changes 
+    in velocites along with player mass to get the momentum and impulse, a measure that can 
+    be assessed along with medical data related to concussions and injuries
+    """
+    
+    return df.with_columns([
+        # Calculate the linear momentum for each instant
+        (pl.col('vx') * pl.col('Weight_kg')).alias('px')
+        , (pl.col('vy') * pl.col('Weight_kg')).alias('py')
+
+        # Calculate the moment of inertia of a rotating upright body (1/12 mr^2)
+        , (1/12 * pl.col('Weight_kg') * (pl.col('Chest_rad_m')**2)).alias('moment')
+        
+        # Calculate the moment of inertia of the upper body turning upright with respect to waist (70% mass)
+        , (1/12 * (pl.col('Weight_kg')*0.7) * (pl.col('Chest_rad_m')**2)).alias('moment_upper')
+    
+    ]).with_columns([
+          # Calculate the magnitude of linear momentum
+        ((pl.col("px")**2 + pl.col("py")**2)**0.5).alias("p_magnitude")
+        
+        # Calculate the angular momentum for the direction
+        , (pl.col('omega_dir')*pl.col('moment')).alias('L_dir')
+
+        # Calculate the angular momentum of the upper body with respect to lower
+        , (pl.col('omega_diff')*pl.col('moment_upper')).alias('L_diff')
+
+
+    ]).with_columns([
+        # Pre-calculate shifted values for linear and angular momenta
+        pl.col("px").shift(1).over("PlayKey").alias("prev_px")
+        , pl.col("py").shift(1).over("PlayKey").alias("prev_py")
+        , pl.col("L_dir").shift(1).over("PlayKey").alias("prev_L_dir")
+        , pl.col("L_diff").shift(1).over("PlayKey").alias("prev_L_diff")
+        
+    ]).with_columns([
+        # Calculate impulse, J, which is the change in linear momentum 
+        ((pl.col("px") - pl.col("prev_px"))).alias("Jx")
+        , ((pl.col("py") - pl.col("prev_py"))).alias("Jy")
+        
+    ]).with_columns([
+          # Calculate the magnitude of linear momentum
+        ((pl.col("Jx")**2 + pl.col("Jy")**2)**0.5).alias("J_magnitude")
+
+        # Calculate torque as the change in angular momentum L over the change in time
+        , (((pl.col("L_dir") - pl.col("prev_L_dir"))) / 0.1).alias("torque")
+        , (((pl.col("L_diff") - pl.col("prev_L_diff"))) / 0.1).alias("torque_internal")
+
+    ]).drop([
+        "prev_L_dir", "prev_px", "prev_py", "prev_L_diff"
+    ])
 
 
 def path_calculator(df):
@@ -167,18 +326,13 @@ def path_calculator(df):
         , pl.col("Angle_Diff").mean().over("PlayKey").alias("Mean_Angle_Diff")
         , pl.col("Speed").max().over("PlayKey").alias("Max_Speed")
         , pl.col("Speed").mean().over("PlayKey").alias("Mean_Speed")
-        , pl.col("a_magnitude").max().over("PlayKey").alias("Max_Accel")
-        , pl.col("a_magnitude").mean().over("PlayKey").alias("Mean_Accel")
-        , pl.col("omega_dir").max().over("PlayKey").alias("Max_omega_dir")
-        , pl.col("omega_dir").mean().over("PlayKey").alias("Mean_omega_dir")
-        , pl.col("omega_o").max().over("PlayKey").alias("Max_omega_o")
-        , pl.col("omega_o").mean().over("PlayKey").alias("Mean_omega_o")
-        , pl.col("omega_diff").max().over("PlayKey").alias("Max_d_omega")
-        , pl.col("omega_diff").mean().over("PlayKey").alias("Mean_d_omega")
-        , pl.col("alpha_dir").max().over("PlayKey").alias("Max_alpha_dir")
-        , pl.col("alpha_dir").mean().over("PlayKey").alias("Mean_alpha_dir")
-        , pl.col("alpha_o").max().over("PlayKey").alias("Max_alpha_o")
-        , pl.col("alpha_o").mean().over("PlayKey").alias("Mean_alpha_o")
+        , pl.col("J_magnitude").max().over("PlayKey").alias("Max_Impulse")
+        , pl.col("J_magnitude").mean().over("PlayKey").alias("Mean_Impulse")
+        , pl.col("torque").max().over("PlayKey").alias("Max_Torque")
+        , pl.col("torque").mean().over("PlayKey").alias("Mean_Torque")
+        , pl.col("torque_internal").max().over("PlayKey").alias("Max_Int_Torque")
+        , pl.col("torque_internal").mean().over("PlayKey").alias("Mean_Int_Torque")
+
         ]).unique(subset=["PlayKey"])
 
 
@@ -202,12 +356,13 @@ def path_calculator(df):
         , 'Mean_Angle_Diff'
         , 'Max_Speed'
         , 'Mean_Speed'
-        , 'Max_omega_dir'
-        , 'Mean_omega_dir'
-        , 'Max_omega_o'
-        , 'Mean_omega_o'
-        , 'Max_d_omega'
-        , 'Mean_d_omega'
+        , 'Max_Impulse'
+        , 'Mean_Impulse'
+        , 'Max_Torque'
+        , 'Mean_Torque'
+        , 'Max_Int_Torque'
+        , 'Mean_Int_Torque'
+      
     ]).sort("PlayKey")
 
 
@@ -216,6 +371,7 @@ def path_calculator(df):
 # Join the Qualitative with the Quantitative to create Summary Table
 def qual_quant_merger(quals, quant):
     from DataHandler import data_shrinker
+
     qual_quant = quals.join(quant, on="PlayKey", how="left")
     qual_quant = data_shrinker(qual_quant)
 
