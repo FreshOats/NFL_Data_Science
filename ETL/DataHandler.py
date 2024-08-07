@@ -1,8 +1,11 @@
 # Data Handler
 # This will load data or write data back to the SQL database
 
-def data_loader(dataset, database='nfl_surface'): # Read in raw data from SQL database
-    #Options are 'quals', 'clean_quals', 
+def data_loader(dataset, database='nfl_surface'): 
+    """
+    Accepts the desired dataset and database strings and extracts from the Postgres database using SQLalchemy, 
+    returning as a polars dataframe. Lazyloading is used for larger datasets. 
+    """
     import polars as pl  # type: ignore
     import numpy as np # type: ignore
     import sqlalchemy as db # type: ignore
@@ -40,8 +43,9 @@ def data_loader(dataset, database='nfl_surface'): # Read in raw data from SQL da
             query = "SELECT playkey, bodypart, DM_M1, DM_M7, DM_M28, DM_M42 FROM injuries"
             df = pl.read_database_uri(query=query, uri=uri)
         elif dataset == 'tracking':
-            scan = pl.scan_csv("F:/Data/nfl-playing-surface-analytics/PlayerTrackData.csv")
-            df = scan.head(10000).collect()
+            df = pl.scan_csv("F:/Data/Processing_data/tracking.csv") # Data has been passed through data_shrinker and decreased from 48 MB to 31 MB
+            # df = pl.scan_csv("F:/Data/nfl-playing-surface-analytics/PlayerTrackData.csv")
+            # df = scan.head(10000).collect()
             # df = scan.collect(streaming=True, infer_schema_length=10000)
         
         elif dataset == 'concussion':
@@ -51,12 +55,12 @@ def data_loader(dataset, database='nfl_surface'): # Read in raw data from SQL da
             query = "SELECT * FROM clean_data"
             df = pl.read_database_uri(query=query, uri=uri)
         elif dataset == 'ngs_data':
-            query = """ SELECT gamekey, playid, gsisid, time, x, y, dis, o, dir, event 
+            query = """ SELECT gamekey, playid, gsisid, time, x, y, dis, o, dir 
                         FROM ngs_data 
                         WHERE gsisid IS NOT NULL 
-                        ORDER BY gamekey
-                        LIMIT 10000
                     """
+                        # ORDER BY gamekey
+                        # LIMIT 10000
             df = pl.read_database_uri(query=query, uri=uri)
         elif dataset == 'positions':
             query = "SELECT gsisid, position FROM punt_data"
@@ -69,9 +73,10 @@ def data_loader(dataset, database='nfl_surface'): # Read in raw data from SQL da
         return None
 
 
-
 def data_writer(df, database, new_table_name):
-    # Write the Cleaned data back to the SQL server, where this database will be retrieved for future analyses
+    """Write the Cleaned data back to the SQL server, where this database will be retrieved for future analyses
+    """
+    
     import sqlalchemy as db # type: ignore
     import pandas as pd # type: ignore
     from sqlalchemy.orm import Session # type: ignore
@@ -90,12 +95,34 @@ def data_writer(df, database, new_table_name):
 
 
 
-def data_shrinker(df, verbose=True):
+def csv_writer(df, new_file_name):
+    """
+    Write table to local file as temporary until all cleaning and transformation is done.
+    """
     import polars as pl # type: ignore
-    import numpy as np # type: ignore
+    import os
+       
+    path = 'F:/Data/Processing_data'
+    full_path = f"{path}/{new_file_name}.csv"
+    
+    # Check if file exists
+    if os.path.exists(full_path):
+        os.remove(full_path)
+    
+    # Write new file
+    df.write_csv(full_path)
+    print(f"New file has been written to {full_path}")
+
+
+
+
+def data_shrinker(df, verbose=True):
     """
     Optimize memory usage of a Polars dataframe for both categorical and numeric data.
     """
+    import polars as pl # type: ignore
+    import numpy as np # type: ignore
+
     start_mem = df.estimated_size("mb")
     if verbose:
         print(f'Memory usage of dataframe is {start_mem:.2f} MB')
@@ -145,14 +172,12 @@ def data_shrinker(df, verbose=True):
     return df
 
 
-
-  # This creates an event enum for the Data Shrinker 
-
 def create_event_enum():
-    import polars as pl # type: ignore
     """
     Create an Enum for known events.
     """
+    import polars as pl # type: ignore
+
     return pl.Enum([
         "ball_snap"
       ,  "drop_kick"

@@ -1,142 +1,287 @@
-# Transform Functions
-# This imports the clean data from the database and reduces the memory usage prior to processing the data
-# This will take about 3 minutes to run
+""" 
+Transform Functions
+This imports the clean data from the database and reduces the memory usage prior to processing the data
+"""
+
+def transform_injury_data(analysis_type='tracking'):
+    """
+    Full transform process for the surface injury data.
+    Output options are for returning a summary df to the database or the full tracking with 
+    additional columns added
+    """
+    if analysis_type == 'tracking':
+        if __name__ == "__main__":
+            input_file = "F:/Data/Processing_data/tracking.csv"
+            output_dir = "F:/Data/Processing_data/output"
+    
+            process_csv('tracking', input_file, output_dir)
+
+    elif analysis_type =='summary':
+        if __name__ == "__main__":
+            input_file = "F:/Data/Processing_data/tracking.csv"
+            output_dir = "F:/Data/Processing_data/output"
+            
+            process_csv('summary', input_file, output_dir)
 
 
-def transform_injury_data(output):
-    from DataHandler import data_loader, data_shrinker, data_writer
+def process_and_save_playkey_group(lazy_df, playkeys, output_dir, group_number):
+    from DataHandler import data_shrinker
+    import os
     import polars as pl # type: ignore
 
-    valid_outputs = ['tracking', 'summary']
-    if output not in valid_outputs:
-        raise ValueError(f"Invalid ouptut selection: '{output}'. Valid options are: '{valid_outputs}'")
-
-    try: 
-        # Transform the tracking data
-        quant = data_loader(dataset='tracking', database='nfl_surface')
-        quant = data_shrinker(quant)
-        quant = angle_corrector(quant)
-        quant = body_builder(quant, 'tracking')
-        quant = velocity_calculator(quant)
-        quant = impulse_calculator(quant)
+    # Filter the lazy DataFrame for the specific PlayKeys
+    group_df = lazy_df.filter(pl.col("PlayKey").is_in(playkeys))
     
-        if output == 'summary':
-            summary = path_calculator(quant)
-            del quant # remove the large table from memory
-            # Open and merge the qualitative data
-            quals = data_loader('qualitative', 'nfl_surface')
-            qual_quant = qual_quant_merger(quals, summary)
+    # Processing
+    group_df = angle_corrector(group_df)
+    group_df = velocity_calculator(group_df)
+    group_df = body_builder(group_df)
+    group_df = impulse_calculator(group_df)
+
+
+    # Collect the data
+    processed_df = group_df.collect()
+    processed_df = data_shrinker(processed_df)
+ 
+
+    # Create the output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+    
+
+    # Save the DataFrame for this group as a CSV file
+    output_file = os.path.join(output_dir, f"group_{group_number}.csv")
+    processed_df.write_csv(output_file)
+    print(f"Saved data for PlayKey group: {group_number}")
+
+
+def process_and_save_summary(lazy_df, playkeys, output_dir, group_number):
+    # Filter the lazy DataFrame for the specific PlayKeys
+    group_df = lazy_df.filter(pl.col("PlayKey").is_in(playkeys))
+    
+    # Processing
+    group_df = angle_corrector(group_df)
+    group_df = velocity_calculator(group_df)
+    group_df = body_builder(group_df)
+    group_df = impulse_calculator(group_df)
+
+    # Calculate the path summary quant data
+    summary_df = path_calculator(group_df)
+
+    # Collect the data
+    summary_df = summary_df.collect()
+    summary_df = data_shrinker(summary_df)
+
+
+    # Create the output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+    
+
+    # Save the summary data for this group in a separate csv file
+    summary_file = os.path.join(output_dir, f"summary_group_{group_number}.csv")
+    summary_df.write_csv(summary_file)
+    
+    print(f"Saved data for PlayKey group: {group_number}")
+
+
+def process_csv(analysis_type, input_file, output_dir, group_size=10000):
+    # Scan the CSV file
+    lazy_df = pl.scan_csv(input_file, truncate_ragged_lines=True, infer_schema_length=10000, ignore_errors=True).drop(['event', 's'])
+    
+    # Get unique PlayKey values
+    unique_playkeys = lazy_df.select(pl.col("PlayKey").unique()).collect()["PlayKey"].to_list()
+    
+    # Calculate the number of groups
+    num_groups = math.ceil(len(unique_playkeys) / group_size)
+    
+
+    if analysis_type == "tracking":
+        # Process each group of PlayKeys
+        for i in range(num_groups):
+            start_idx = i * group_size
+            end_idx = min((i + 1) * group_size, len(unique_playkeys))
+            playkey_group = unique_playkeys[start_idx:end_idx]
+            process_and_save_playkey_group(lazy_df, playkey_group, output_dir, i + 1)
+
+    elif analysis_type == "summary":
+        # Process each group of Summary
+        for i in range(num_groups):
+            start_idx = i * group_size
+            end_idx = min((i + 1) * group_size, len(unique_playkeys))
+            playkey_group = unique_playkeys[start_idx:end_idx]
+            process_and_save_summary(lazy_df, playkey_group, output_dir, i + 1)
+
+    print("Processing complete.")
+
+
+    # from DataHandler import data_loader, data_shrinker, data_writer
+    # import polars as pl # type: ignore
+
+    # quant = pl.scan_csv("F:/Data/nfl-playing-surface-analytics/PlayerTrackData.csv").drop(['event', 's'])
+
+    # valid_outputs = ['tracking', 'summary']
+    # if output not in valid_outputs:
+    #     raise ValueError(f"Invalid ouptut selection: '{output}'. Valid options are: '{valid_outputs}'")
+
+    # try: 
+    #     # Transform the tracking data
+    #     quant = angle_corrector(quant)
+    #     print("angles corrected")
+    #     quant = body_builder(quant, 'tracking')
+    #     print("weights added")
+    #     quant = velocity_calculator(quant)
+    #     print("velocity calculated")
+    #     quant = impulse_calculator(quant)
+    #     print("impulse calculated, starting path calculations.")
+    
+    #     if output == 'summary':
+    #         summary = path_calculator(quant)
+    #         print("path calculated, opening data loader")
+    #         del quant # remove the large table from memory
+    #         # Open and merge the qualitative data
+    #         quals = data_loader('qualitative', 'nfl_surface')
+    #         print("qualitative loaded")
+    #         qual_quant = qual_quant_merger(quals, summary)
             
-            print("Writing all quantitative and qualitative summary data to the database as summary_data. Wait.")
-            data_writer(qual_quant, 'nfl_surface', 'summary_data')
-            print("Data has been uploaded to the database. Probably.")        
+    #         print("Writing all quantitative and qualitative summary data to the database as summary_data. Wait.")
+    #         data_writer(qual_quant, 'nfl_surface', 'summary_data')
+    #         print("Data has been uploaded to the database. Probably.")        
 
-        elif output == 'tracking':
-            # upload the physical data to the database for machine learning
-            print("Writing the transformed table with physical parameters to the database as quantitative")
-            data_writer(quant, 'nfl_surface', 'quantitative')
-            print("Data has been uploaded to the database. Go celebrate!")
+    #     elif output == 'tracking':
+    #         # upload the physical data to the database for machine learning
+    #         print("Writing the transformed table with physical parameters to the database as quantitative")
+    #         data_writer(quant, 'nfl_surface', 'quantitative')
+    #         print("Data has been uploaded to the database. Go celebrate!")
         
-    except Exception as e:
-        print(f"An error occurred with your selection, '{output}': {e}")
-        return None
+    # except Exception as e:
+    #     print(f"An error occurred with your selection, '{output}': {e}")
+    #     return None
 
-
+######################################################################################
        
-def transform_concussion_data(output):
-    from DataHandler import data_loader, data_shrinker, data_writer
-    import polars as pl # type: ignore
+def transform_concussion_data(input_file, output_dir):
+    """
+    Full transform process for the concussion data.
+    Output options are for returning a summary df to the database or the full tracking with 
+    additional columns added
+    """
+    import os 
+    import polars as pl 
 
-    valid_outputs = ['tracking', 'summary']
-    if output not in valid_outputs:
-        raise ValueError(f"Invalid ouptut selection: '{output}'. Valid options are: '{valid_outputs}'")
-
-    try: 
-        track = data_loader(dataset='ngs_data', database='nfl_concussion')
-        track = data_shrinker(track)
-        track = column_corrector(track)
-        track = angle_corrector(track)
-        track = body_builder(track, 'ngs_data')
-        track = velocity_calculator(track)
-        track = impulse_calculator(track)
+    # Extract the base name of the input file
+    base_name = os.path.splitext(os.path.basename(input_file))[0]
     
-        if output == 'summary':
-            summary =  path_calculator(track)
-            del track # remove the large table from memory
-            # Open and merge the qualitative data
-            quals = data_loader('clean_quals', 'nfl_concussion')
-            qual_quant = qual_quant_merger(quals, summary)
-            
-            print("Writing all quantitative and qualitative summary data to the database as summary_data. Wait.")
-            data_writer(qual_quant, 'nfl_concussion', 'summary_data')
-            print("Data has been uploaded to the database. Probably.")        
+    # Read the CSV file
+    lazy_df = pl.scan_csv(input_file, truncate_ragged_lines=True, ignore_errors=True).drop(['Event', 'dis', 'Season_Year'])
+    
+    # Apply the processing steps
+    lazy_df = column_corrector(lazy_df)
+    lazy_df = angle_corrector(lazy_df)
+    lazy_df = body_builder(lazy_df, 'ngs_data')
+    lazy_df = velocity_calculator(lazy_df)
+    lazy_df = impulse_calculator(lazy_df)
+    
+    # Calculate the path summary
+    lazy_summary = path_calculator(lazy_df)
+    
+    # Create output filenames
+    processed_output = os.path.join(output_dir, f"{base_name}_processed.csv")
+    summary_output = os.path.join(output_dir, f"{base_name}_summary.csv")
+    
+    # Save the processed data and summary
+    lazy_df.collect().write_csv(processed_output)
+    lazy_summary.collect().write_csv(summary_output)
+    
+    print(f"Processed and saved data for file: {input_file}")
 
-        elif output == 'tracking':
-            # upload the physical data to the database for machine learning
-            print("Writing the transformed table with physical parameters to the database as quantitative")
-            data_writer(track, 'nfl_concussion', 'quantitative')
-            print("Data has been uploaded to the database. Good for you!")
+
+    # Main Concussion execution
+    if __name__ == "__main__":
+        input_dir = "F:/Data/Processing_data/NGS"
+        output_dir = "F:/Data/Processing_data/output"
         
-    except Exception as e:
-        print(f"An error occurred with your selection, '{output}': {e}")
-        return None
+        # Ensure output directory exists
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Process all NGS-*.csv files in the input directory
+        for filename in os.listdir(input_dir):
+            if filename.startswith("NGS") and filename.endswith(".csv"):
+                input_file = os.path.join(input_dir, filename)
+                process_ngs_file(input_file, output_dir)
+        
+        print("All files processed.")
 
 
-
-
-#############################################
+######################################################################################
 def column_corrector(df):
-    import polars as pl # type: ignore
     """
     Add a Play_Time column that acts like the 'time' column did in the injury dataset. 
     Each PlayKey will start at 0.0 and increase by 0.1 for each subsequent record.
     """
+    import polars as pl # type: ignore
+    
+    # First, let's identify any problematic gsisid values
+    problematic_gsisid = df.filter(pl.col('GSISID').cast(pl.Int32).is_null()).select('GSISID').unique()
+    
+    # Collect the problematic gsisid values (this will execute the lazy computation)
+    problematic_gsisid_count = problematic_gsisid.collect().height
+    
+    if problematic_gsisid_count > 0:
+        print(f"Found {problematic_gsisid_count} problematic gsisid values:")
+        print(problematic_gsisid.collect())
+    
     df = df.with_columns([
         pl.concat_str([
-            pl.col('gsisid').cast(pl.Int32).cast(pl.Utf8)
+            pl.when(pl.col('GSISID').cast(pl.Int32).is_null())
+              .then(pl.col('GSISID').cast(pl.Float64).round(0).cast(pl.Int32).cast(pl.Utf8))
             , pl.lit('-')
-            , pl.col('gamekey').cast(pl.Utf8)
+            , pl.col('GameKey').cast(pl.Utf8)
             , pl.lit('-')
-            , pl.col('playid').cast(pl.Utf8)
+            , pl.col('PlayID').cast(pl.Utf8)
         ]).alias('PlayKey')
     ])
      
-    
     df = df.select([
         'PlayKey'
-        , 'time'
+        , 'Time'
         , 'x'
         , 'y'
         , 'o'
         , 'dir'
-        , 'gsisid'
-        ]).rename({"time":"datetime"})
+        , 'GSISID'
+        ]).rename({"Time":"Datetime"})
 
-    df = df.sort(['PlayKey', 'datetime'])
+    df = df.sort(['PlayKey', 'Datetime'])
 
     df = df.with_columns(
         (pl.arange(0, pl.len()) * 0.1).over("PlayKey").alias("time")
-        ).with_columns([pl.col('gsisid').cast(pl.Int32)])  
+        ).with_columns([
+            pl.when(pl.col('GSISID').cast(pl.Int32).is_null())
+              .then(pl.col('GSISID').cast(pl.Float64).round(0).cast(pl.Int32))
+              .otherwise(pl.col('GSISID').cast(pl.Int32))
+              .alias('GSISID')
+        ])  
     
     return df
 
 
 
 def calculate_angle_difference(angle1, angle2):
-    import numpy as np # type: ignore
     """
     Calculate the smallest angle difference between two angles 
     using trigonometric functions, accounting for edge cases.
     """
+    import numpy as np # type: ignore
+
     sin_diff = np.sin(np.radians(angle2 - angle1))
     cos_diff = np.cos(np.radians(angle2 - angle1))
     return np.degrees(np.arctan2(sin_diff, cos_diff))
 
 def angle_corrector(df):
-    import polars as pl # type: ignore
     """
     Make corrections to angles to reduce fringe errors at 360
     """
+    import polars as pl # type: ignore
+
     df = df.with_columns([
         ((pl.col("dir") + 180) % 360 - 180).alias("dir")
         , ((pl.col("o") + 180) % 360 - 180).alias("o")
@@ -148,10 +293,15 @@ def angle_corrector(df):
 
 
 def body_builder(df, df_name):
+    """
+    This uses averages collected for height, weight, and chest radius for each position. This information
+    is used to determine the momentum and impulse rather than just looking at velocities in the analysis. Chest
+    radius is needed for angular moment of inertia as a rotating cyliner.
+    """
     import polars as pl # type: ignore
     from DataHandler import data_loader
 
-    body_data = pl.DataFrame({
+    body_data = pl.LazyFrame({
         "position": ["QB", "RB", "FB", "WR", "TE", "T", "G", "C", "DE", "DT", "NT", "LB", "OLB", "MLB", "CB", "S", "K", "P", "SS", "ILB", "FS", "LS", "DB"]
         # , "Position_Name": ["Quarterback", "Running Back", "Fullback", "Wide Receiver", "Tight End", "Tackle", "Guard", "Center", "Defensive End", "Defensive Tackle", "Nose Tackle", "Linebacker", "Outside Linebacker", "Middle Linebacker", "Cornerback", "Safety", "Kicker", "Punter", "Strong Safety", "Inside Linebacker", "Free Safety", "Long Snapper", "Defensive Back"]
         , "Height_m": [1.91, 1.79, 1.85, 1.88, 1.96, 1.97, 1.90, 1.87, 1.97, 1.92, 1.88, 1.90, 1.90, 1.87, 1.82, 1.84, 1.83, 1.88, 1.84, 1.90, 1.84, 1.88, 1.82]
@@ -163,29 +313,12 @@ def body_builder(df, df_name):
     if df_name not in valid_df_names:
         raise ValueError(f"Invalid dataframe name '{df_name}'. Valid options are: {valid_df_names}")
 
-    try: 
-        if df_name == 'ngs_data':
-            position = data_loader(dataset='positions', database='nfl_concussion')
-            position = position.join(
-                body_data
-                , left_on='position'
-                , right_on='position'
-                , how='left'
-                )
-            
-            df = df.join(
-                position
-                , on='gsisid'
-                , how='left'
-                ).drop_nulls(subset=['position'])
-            
-
-        elif df_name == 'tracking':
+    try:    
+        if df_name == 'tracking':
             position = data_loader(dataset='play_positions', database='nfl_surface')
-            position = position.join(
+            position = position.lazy().join(
                 body_data
-                , left_on='position'
-                , right_on='position'
+                , on='position'
                 , how='left'
                 )
 
@@ -194,11 +327,27 @@ def body_builder(df, df_name):
                 , left_on='PlayKey'
                 , right_on='playkey'
                 , how='left'
-            ).drop_nulls(subset=['position']).drop(['event'])
-
+            )    
             
 
-        return df    
+        elif df_name == 'ngs_data':
+            position = data_loader(dataset='positions', database='nfl_concussion')
+            position = position.lazy().join(
+                body_data
+                , left_on='position'
+                , right_on='position'
+                , how='left'
+                )
+            
+            df = df.join(
+                position
+                , left_on='GSISID'
+                , right_on='gsisid'
+                , how='left'
+                )
+        
+
+        return df.filter(pl.col('position').is_not_null())    
     
     except Exception as e: 
         print(f"An error occurred while loading the dataframe '{df_name}': {e}")
@@ -208,14 +357,15 @@ def body_builder(df, df_name):
 
 
 def velocity_calculator(df):
-    import numpy as np # type: ignore
-    import polars as pl # type: ignore
     """
     Using the (X,Y) and time columns, perform calculations based on the 
     difference between two rows to find displacement, speed, direction 
     of motion, velocity in x and y components, and the angular velocities 
     of the direction of motion and orientations 
     """
+    import numpy as np # type: ignore
+    import polars as pl # type: ignore
+
     
     return df.with_columns([
         # Convert 'o' and 'dir' to radians
@@ -254,13 +404,13 @@ def velocity_calculator(df):
 
 
 def impulse_calculator(df):
-    import numpy as np # type: ignore
-    import polars as pl # type: ignore
     """
     Using the (X,Y) and time columns, perform calculations based on the velocities and changes 
     in velocites along with player mass to get the momentum and impulse, a measure that can 
     be assessed along with medical data related to concussions and injuries
     """
+    import numpy as np # type: ignore
+    import polars as pl # type: ignore
     
     return df.with_columns([
         # Calculate the linear momentum for each instant
@@ -310,11 +460,12 @@ def impulse_calculator(df):
 
 
 def path_calculator(df):
+    """
+    Collects dispalcement and distance, means and maxima for the for each of the parameters collected
+    and outputs to a quantitative summary table that can be joined to the qualitative table for machine learning.  
+    """
     import polars as pl # type: ignore
-    # This provides a summary table that can be integrated with the qualitative data
 
-    # Calculate total distance and displacement for each PlayKey
-    # Calculate total distance and displacement for each PlayKey
     result = df.select([
         "PlayKey"
         , pl.col("Displacement").sum().over("PlayKey").alias("Distance")
@@ -370,6 +521,10 @@ def path_calculator(df):
 
 # Join the Qualitative with the Quantitative to create Summary Table
 def qual_quant_merger(quals, quant):
+    """
+    Joins the qualitative and quantitative summary data
+    """
+
     from DataHandler import data_shrinker
 
     qual_quant = quals.join(quant, on="PlayKey", how="left")

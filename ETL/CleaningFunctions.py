@@ -7,21 +7,26 @@
 
 ##### Primary Cleaning Functions #####
 def clean_injuries():
-    from DataHandler import data_writer
+    """
+    Applies data cleaning to surface injury data and writes to 'qualitative' table in db 
+    """
+    from DataHandler import csv_writer
     database = "nfl_surface"
     quals = table_joiner() 
     quals = column_capitalizer(quals, df_name='quals')
     quals = stadium_cleaner(quals, df_name='quals')
     quals = weather_cleaner(quals)
     quals = injury_cleaner(quals)
-    data_writer(quals, database, "qualitative")
-    print("Play and Injury Data has been cleaned and uploaded as qualitative")
+    csv_writer(quals, "qualitative_injuries")
     del quals
 
 
 def clean_concussions():
-    from DataHandler import data_loader, data_writer
-    import polars as pl
+    """
+    Applies data cleaning to concussion data and writes to 'clean_data' table in db 
+    """
+    from DataHandler import data_loader, csv_writer
+    import polars as pl # type: ignore
     database = 'nfl_concussion'
 
     df = data_loader(database='nfl_concussion', dataset='concussion')
@@ -31,16 +36,18 @@ def clean_concussions():
     df = turf_cleaner(df)
     df = df.filter(pl.col("Game_Date").is_not_null())
     df = score_splitter(df)
-    data_writer(df, database, "clean_data")
-    print("Concussion Data has been cleaned and uploaded as clean_data")
-    # return df
+    csv_writer(df, "qualitative_concussion")
+    del df
 
 
 
 ######################################################################################
 # Extracts and joins the necessary columns from the Injuries and Plays tables
 def table_joiner():
-    import polars as pl
+    """
+    Joins the plays and injuries tables in the surface injury data 
+    """
+    import polars as pl # type: ignore
     from DataHandler import data_loader
 
     plays = data_loader('plays', 'nfl_surface')
@@ -64,11 +71,15 @@ def table_joiner():
 
         ])
     )
+    print(f"Tables are holding hands. How cute.")
     return quals
 
 
 # Changes the all lower-case to Capitalized PascalCase column headers 
-def column_capitalizer(df, df_name):          
+def column_capitalizer(df, df_name):
+    """
+    Maps the headers and converts to capitalized forms for consistency
+    """          
     if df_name == 'quals':
         columns = {
         'playkey': "PlayKey"
@@ -112,11 +123,17 @@ def column_capitalizer(df, df_name):
 
 
     df = df.rename(columns)
+    print(f"Columns have been CApiTaliZeD.")
     return df
 
-# This changes stadiums to either Indoor or Outdoor per game records - some of the dome stadiums have a roof that can open, if open the game is considered outdoor.
+
 def stadium_cleaner(df, df_name):
-    import polars as pl 
+    """
+    Noramlizes all stadium types to be either indoor or outdoor per game records. Some of the dome 
+    stadiums were listed as open or closed for different games, and these were accounted for.
+    All games with dates were checked to ensure null values were indeed outdoor games. 
+    """
+    import polars as pl  # type: ignore
 
     if df_name == 'quals':       
         stadium_dict = {
@@ -201,11 +218,15 @@ def stadium_cleaner(df, df_name):
 
     df = df.with_columns(pl.col("Stadium_Type").replace(stadium_dict)) # This uses the dict to assign naming conventions
 
+    print(f"Someone managed to clean up those stadiums!")
     return df
 
-# Cleans up the weather data from having a lot of different but similar to a few categories
+
 def weather_cleaner(df):
-     import polars as pl
+     """
+     Uses mapping to limit the number of different weather groupings. 
+     """
+     import polars as pl # type: ignore
      
      weather_dict = {
             'Clear and warm': 'Clear'
@@ -321,12 +342,17 @@ def weather_cleaner(df):
                 )
      df = df.with_columns(pl.col("Weather").fill_null("Cloudy"))
 
+     print(f"Looks like the weather has been cleared up.")
      return df
 
 
-# This fixes the issues with introduced nulls following the joins 
+
 def injury_cleaner(quals):
-    import polars as pl
+    """
+    Specific to the surface injury data, this filters null values from important data and
+    fills nulls that can be appropriately filled. 
+    """
+    import polars as pl # type: ignore
     quals = quals.filter(pl.col('Play_Type').is_not_null()) # 0.14% of rows did not have a play type, and ALL of these were non-injury plays, so they were removed
 
     quals = quals.with_columns(pl.col("Body_Part").fill_null("No_Injury")) # This fills all null from the join with No Injury
@@ -334,6 +360,7 @@ def injury_cleaner(quals):
     quals = quals.with_columns(
     pl.col(["DM_1", "DM_7", "DM_28", "DM_42"]).fill_null(0)) # This fills the nulls from the Join with 0s, since there were no injuries.
 
+    print(f"The injuries have been sanitized.")
     return quals
 
 
@@ -343,7 +370,7 @@ def turf_cleaner(df):
     ''' 
     Changes the many different types of turf listed into either natural or synthetic
     '''
-    import polars as pl
+    import polars as pl # type: ignore
 
     turf_dict = {
         'Grass': 'Natural'
@@ -372,13 +399,15 @@ def turf_cleaner(df):
 
     
     df = df.with_columns(pl.col("Field_Type").replace(turf_dict))
+
+    print(f"The turf has been mowed, or whatever you do to maintain synthetic.")
     return df
 
 def score_splitter(df):
     ''' 
     Splits the string column from Score_Home_Visiting into two numeric columns for each of the scores. It also creates a column that calculates the difference. 
     '''
-    import polars as pl
+    import polars as pl # type: ignore
 
     df = df.with_columns([
         pl.col("Score_Home_Visiting").str.extract(r"(\d+)\s*-\s*(\d+)", 1).cast(pl.Int16).alias("Home_Score")
@@ -391,21 +420,6 @@ def score_splitter(df):
     
     df = df.drop("Score_Home_Visiting")
     
+    print(f"The scores have been fixed. Just not how Pete Rose would fix them.")
     return df
-
-
-# def weight_gainer(df):
-#     '''
-#     Adds body parameters weight, height, and chest radius per player position
-#     '''
-#     import polars as pl
-
-#     body_data = {
-#     "Position_Code": ["QB", "RB", "FB", "WR", "TE", "T", "G", "C", "DE", "DT", "NT", "LB", "OLB", "MLB", "CB", "S", "K", "P", "SS", "ILB", "FS", "LS", "DB"]
-#     , "Position_Name": ["Quarterback", "Running Back", "Fullback", "Wide Receiver", "Tight End", "Tackle", "Guard", "Center", "Defensive End", "Defensive Tackle", "Nose Tackle", "Linebacker", "Outside Linebacker", "Middle Linebacker", "Cornerback", "Safety", "Kicker", "Punter", "Strong Safety", "Inside Linebacker", "Free Safety", "Long Snapper", "Defensive Back"]
-#     , "Height_m": [1.91, 1.79, 1.85, 1.88, 1.96, 1.97, 1.90, 1.87, 1.97, 1.92, 1.88, 1.90, 1.90, 1.87, 1.82, 1.84, 1.83, 1.88, 1.84, 1.90, 1.84, 1.88, 1.82]
-#     , "Weight_kg": [102.1, 95.3, 111.1, 90.7, 114.6, 140.6, 141.8, 136.1, 120.2, 141.8, 152.0, 110.0, 108.9, 113.4, 87.4, 95.9, 92.08, 97.52, 95.9, 110.0, 95.9, 108.86, 87.4]
-#     , "Chest_rad_m": [0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191]
-#     }
-
     
