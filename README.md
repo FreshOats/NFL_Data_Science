@@ -18,14 +18,20 @@ The sources of these data were related to competitions on Kaggle; however the go
 - [NFL 1st and Future - Analytics](https://www.kaggle.com/competitions/nfl-playing-surface-analytics/data)
 - [NFL Punt Analytics Competition](https://www.kaggle.com/competitions/NFL-Punt-Analytics-Competition/data)
 
+
+Due to the size of the tracking data, I will need to transform the data prior to putting into the database, so I will be performing this as a standard ETL using Polars in python to extract and transform, and then loading into tSQL via Azure for analytics and vizzes. 
+
 ## Databases 
-The original project used a PostgreSQL database, which is what I will continue to use for this iteration of the project. 
+The original project used a PostgreSQL, but I will be changing this to tSQL via Azure. 
+
+### Saving the data
+The initial processing was done by extracting data from a set of .csv files and transforming them. Due to the high volume of data within the tables, I changed data formats of the numbers and strings to lighter integer values and enumerated values. To maintain the datatype structure, I saved such as parquet files, since .csv cannot save them. 
 
 Since there is no way to connect the data from each datatset - the player IDs are not specified as consistent across the data, and the seasons are also unclear from the first dataset, I will maintain these in two separate databases; though this may change if there is enough of a correlation in Player ID numbers to the GSISID numbers, that may link the two datasets. This would be ideal, because it is possible that some players who sustained one of the injuries may also correlate with the other type. 
 
 The code that establishes the databases and tables are in the following files:
 -  SQL/concussion.sql
--  /SQL/injuries.sql 
+-  SQL/injuries.sql 
 
 #### Injuries.sql
     The injuries database was straightforward in setup. There are three tables: plays, injuries, and tracking.
@@ -69,6 +75,103 @@ The code that establishes the databases and tables are in the following files:
     If I know their impact is hitting the ground, I can calculate the moment of inertia based on their height rotating from 2/3 height CM to the ground. Will need to consult any notes or videos about each play. 
 
     The most common measure for assessing concussions is Impulse (F*delta_t), which we have. 
+
+
+# Separating the Data
+## Summary Data
+
+The summary data is a collection of the following parameters from both the injury and the concussion datesets. 
+- PlayKey
+- Distance
+- Displacement
+- Path_diff
+- Max/Mean Angle_diff
+- Max/Mean Speed
+- Max/Mean Impulse
+- Max/Mean Torque
+- Max/Mean Torque_int
+
+These datasets will be joined with a union, since the PlayKeys will not be overlapping - NEED TO VERIFY THIS
+
+### Vizzes - all need to be normalized
+- Injuries by Weather Condition
+- Concussions by playtype
+- Concussions by offense/defense
+- Injuries by Field Type
+- Injuries by Temperatures (5 degree bins)
+- Injuries by Position: 
+    - Add Is_Severe parameter
+
+### Machine Learning
+- Predict severe injuries
+- Predict injury type (including concussions)
+- Predict if an injury occurs: 
+    - Defining high risk behaviors
+- Identify high risk GSISIDs
+    - Can we assess if particular players are involved in multiple high risk plays? 
+    - Do these GSISIDs eventually suffer from an injury?
+
+## Tracking Data (NGS)
+
+The tracking data is collected at 10 Hz. 
+The data from concussions and injuries are substantially large, so that doing a union is prohibitive unless sampled. 
+The following are the data collected and calcuated in the NGS data, * denotes only in Concussion set
+
+- PlayKey
+- DateTime*
+- GSISID*
+- time
+- x
+- y
+- dir
+- dis
+- o 
+- Angle_diff
+- Displacement
+- Speed
+- Direction
+- Vx
+- Vy 
+- w_dir
+- w_o
+- w_diff
+- position
+- height_m
+- weight_kg
+- chest_rad
+- px
+- py
+- moment
+- moment_upper
+- p_magnitude
+- L_dir
+- L_diff
+- Jx
+- Jy
+- J_magnitude
+- torque
+- torque_int
+
+
+What these data will be used for are in creating vizzes for each individual injury path on Tableau, for which only plays associated with injuries are needed.
+Additionally, I would like to look at mappings of some of the plays where an injury occurred, but utilizing the momentum, impulse, torque, and internal torque 
+
+### Dashboard per injury?
+- Torque / time
+- Torque_int / time
+- J_magnitude / time
+- (Distance - Displacement) / time
+- Angular Velocities / time
+- Angular Momentums / time
+- p_magnitude / time
+
+all of these could be attached to a dash where the field is displayed with the x,y coordinate path 
+
+### Concussion analysis
+With this, for all but one of the plays the player collided with another player. I would also like to plot the two people's paths and show the differences
+in the impulses and torques at the point of contact. What is different between the impulse that caused the concussion and the impulse of the opponent that 
+didn't incur the same injury? 
+
 
     
 
