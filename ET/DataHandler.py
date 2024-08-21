@@ -84,7 +84,7 @@ def parquet_writer(df, new_file_name):
     import polars as pl # type: ignore
     import os
        
-    path = 'F:/Data/Clean_Data'
+    path = 'F:/Data/Processing_data'
     full_path = f"{path}/{new_file_name}.parquet"
     
     # Check if file exists
@@ -103,12 +103,10 @@ def data_shrinker(df, verbose=True):
     import polars as pl # type: ignore
     import numpy as np # type: ignore
 
-    # Enable string cache to ensure consistent encoding
-    pl.enable_string_cache()
-
     start_mem = df.estimated_size("mb")
     if verbose:
         print(f'Memory usage of dataframe is {start_mem:.2f} MB')
+
 
     for col in df.columns:
         col_type = df[col].dtype
@@ -139,13 +137,14 @@ def data_shrinker(df, verbose=True):
 
         elif col_type == pl.Utf8:
             if col != "PlayKey" and df[col].n_unique() / len(df) < 0.5:  # If less than 50% unique values
-                # Create an Enum type for the column
-                enum_type = pl.Enum(df[col].unique())
-                df = df.with_columns(pl.col(col).cast(enum_type))
+                df = df.with_columns(pl.col(col).cast(pl.Categorical))
 
     end_mem = df.estimated_size("mb")
+
+    optimized_schema = df.schema
+
     if verbose:
         print(f'Memory usage after optimization is: {end_mem:.2f} MB')
         print(f'Decreased by {100 * (start_mem - end_mem) / start_mem:.1f}%')
 
-    return df
+    return df, optimized_schema

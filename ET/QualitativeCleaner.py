@@ -1,7 +1,7 @@
 # Joins and Cleans the Qualitative Data from the Injury and Concussion Data
 
 ##### Primary Injury Cleaning Function #####
-def clean_injuries():
+def clean_injury_qual():
     """
     Applies data cleaning to surface injury data and writes to 'qualitative_injuries' as a csv file 
     """
