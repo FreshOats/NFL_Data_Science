@@ -6,15 +6,18 @@ def clean_injury_qual():
     Applies data cleaning to surface injury data and writes to 'qualitative_injuries' as a csv file 
     """
     from DataHandler import parquet_writer, data_shrinker
+    import os 
 
     analysis = "injury"
+    injury_qual_path = "F:/Data/Processing_data/QualInjuries.parquet"
+
     df = table_joiner(analysis) 
     df = injury_interpolator(df, analysis)
     df = stadium_cleaner(df)
     df = weather_cleaner(df)
-    df = data_shrinker(df)
-    parquet_writer(df, "qualitative_injuries")
-    del df
+    df, schema = data_shrinker(df)
+    df.write_parquet(injury_qual_path)
+
     print('Injuries have been cleaned and dressed.')
     # return df
 
@@ -27,6 +30,8 @@ def clean_concussions():
     from DataHandler import parquet_writer, data_shrinker
 
     analysis = "concussion"
+    concussion_qual_path = "F:/Data/Processing_data/QualitativeConcussions.parquet"
+    
     df = table_joiner(analysis)
     df = injury_interpolator(df, analysis)
     df = stadium_cleaner(df)
@@ -34,8 +39,8 @@ def clean_concussions():
     df = turf_cleaner(df)
     df = cancellation_cleaner(df)
     df = score_splitter(df)
-    df = data_shrinker(df)
-    parquet_writer(df, "qualitative_concussions")
+    df, schema = data_shrinker(df)
+    df.write_parquet(concussion_qual_path)
     del df
 
     print('Concussions have been assessed and cleared for play.')
@@ -399,7 +404,7 @@ def weather_cleaner(df):
 def turf_cleaner(df):
     import polars as pl # type: ignore
 
-    df = df.rename({"Turf": "FieldType"})
+    # df = df.rename({"Turf": "FieldType"})
 
     turf_dict = {
         'Grass': 'Natural',

@@ -43,15 +43,38 @@ def clean_injury_quant():
 
 
     # Transform     
-    process_file(optimized_path, group_dir)
+    process_file(optimized_path, group_dir) # WORKING
     injury_summary_maker(group_dir)   # This is currently broken because there is no "F:/Data/Processing_data/QualitativeInjuries.parquet"
             # I will need to fix the qualitative data functions and use the outputs from those to run this. 
-    tracking_injuries(group_dir, main_dir)
+    tracking_injuries(group_dir, main_dir) # WORKING
 
 
 
 ###############################################################################
+#### Primary Concussion Tranformation Functions ####
 
+def clean_concussion_quant():
+    """
+    Cycles through the different datasets cleaning the concussion data. 
+    After processing, the data are filtered and concatenated into two different datasets: summary, and tracking
+    """
+
+    analysis = 'concussion'
+    source_dir = "F:/Data/NFL-Punt-Analytics-Competition/"
+
+    
+
+
+
+
+
+
+
+
+
+
+
+###############################################################################
 #### Processing Subroutines
 def create_initial_lazyframe(injury_tracking_path):
     import polars as pl # type: ignore 
@@ -79,7 +102,7 @@ def process_and_save_playkey_group(df, playkeys, group_dir, group_number):
     group_df = (group_df
                 .pipe(angle_corrector)
                 .pipe(velocity_calculator)
-                .pipe(body_builder)
+                .pipe(body_builder_inj)
                 .pipe(impulse_calculator))
 
     # Create the output directory if it doesn't exist
@@ -119,8 +142,108 @@ def process_file(optimized_path, group_dir, group_size=20000):
     print("Processing complete.")
 
 
-###############################################################################
+def process_and_save_concussion_data():
+    """
+    Extract and Transform the tracking data for the concussion dataset per file.  
+    These datasets will then be used to create the summary data and then filter 
+    for the injuries using the video review information to get only the concussion plays for
+    the player and their opponent, which will be a different playkey based on GSISID, but the latter
+    portion will match. 
+    """
+    import polars as pl # type: ignore
+    import os
+    from DataHandler import data_shrinker
 
+    source_dir = "F:/Data/NFL-Punt-Analytics-Competition/"
+    output_dir = "F:/Data/Processing_data/concussion_output/"
+    os.makedirs(output_dir, exist_ok=True)
+
+
+    for file in os.listdir(source_dir):
+        if file.startswith("NGS-"):
+            file_path = os.path.join(source_dir, file)
+            
+
+            # Read the CSV into polars DF
+            df = pl.read_csv(file_path, truncate_ragged_lines=True)
+            df, schema = data_shrinker(df)
+            df = (df
+                .pipe(column_corrector)
+                    .pipe(angle_corrector)
+                    .pipe(body_builder_conc)
+                    .pipe(velocity_calculator)                
+                    .pipe(impulse_calculator))
+            
+            output_file_path = os.path.join(output_dir, file.replace(".csv", ".parquet"))
+
+            df.write_parquet(output_file_path)
+
+            print(f"Processed and saved: {output_file_path}")
+
+    print("For fuck's sake that took a while. Finally done processing and saving the concussion files.")
+
+
+
+def create_concussion_review_df(review):
+    """
+    Create a new DataFrame from multiple Parquet files, including only rows where the PlayKey matches those in the review DataFrame.
+    """
+    import polars as pl # type: ignore
+    import os
+    pl.enable_string_cache()
+
+    ngs_dir = "F:/Data/Processing_data/concussion_output/"
+    output_file_path = "F:/Data/Processing_data/OpponentPlays.parquet"
+
+
+    # Add the OpponentKey column
+    review = review.with_columns(
+        (pl.col("Primary_Partner_GSISID") + pl.col("PlayKey").str.slice(5)).alias("OpponentKey")
+        )
+    # Filter OpponentKey values that are longer than 12 characters
+    
+    # Extract PlayKey and OpponentKey values into lists
+    playkey_list = review["PlayKey"].to_list()
+    opponentkey_list = review["OpponentKey"].to_list()
+
+    # Remove any "Unknown" GSISID opponents from the list, since it will be a nonsense PlayKey
+    opponentkey_list = [key for key in opponentkey_list if key is not None and len(key) <= 12]
+
+    # Combine both lists
+    combined_keys = playkey_list + opponentkey_list
+
+
+    # Initialize a list to store dataframes from each table
+    dataframes = []
+
+    # Iterate through the parquet files in the directory
+    for file in os.listdir(ngs_dir):
+        if file.startswith("NGS-"):
+            file_path = os.path.join(ngs_dir, file)
+
+            # Read into df
+            df = pl.read_parquet(file_path)
+
+            # Filter based on matching PlayKey values
+            filtered_df = df.filter(pl.col('PlayKey').is_in(combined_keys))
+
+            # Append to the dataframes
+            dataframes.append(filtered_df)
+
+    combined_df = pl.concat(dataframes)
+
+    combined_df = combined_df.join(
+        review
+        , on='PlayKey'
+        , how = 'left'
+    )
+
+    combined_df.write_parquet(output_file_path)
+
+    print(f"Processed and saved: {output_file_path}")
+
+
+###############################################################################
 #### Transformation Functions
 def calculate_angle_difference(angle1, angle2):
     """
@@ -209,7 +332,7 @@ def velocity_calculator(df):
         return None
     
 
-def body_builder(df):
+def body_builder_inj(df):
     """
     This uses averages collected for height, weight, and chest radius for each position. This information
     is used to determine the momentum and impulse rather than just looking at velocities in the analysis. Chest
@@ -255,6 +378,64 @@ def body_builder(df):
         df = df.join(
             position
             , on='PlayKey'
+            , how='left'
+        )    
+
+        return df.filter(pl.col('Position').is_not_null())    
+        
+    except Exception as e: 
+        print(f"An error occurred during body_builder: {e}")
+        return None
+
+
+def body_builder_conc(df):
+    """
+    This uses averages collected for height, weight, and chest radius for each position. This information
+    is used to determine the momentum and impulse rather than just looking at velocities in the analysis. Chest
+    radius is needed for angular moment of inertia as a rotating cylinder.
+    The data here are cast as f32 to reduce the size of these columns as well as in all future calculations, where the f64 
+    gets exponentially larger with application. 
+    """
+    import polars as pl # type: ignore
+
+    # Enable global string cache
+    pl.enable_string_cache()
+
+
+    try:
+        body_data = pl.DataFrame({
+            "Position": ["QB", "RB", "FB", "WR", "TE", "T", "G", "C", "DE", "DT", "NT", "LB", "OLB", "MLB", "CB", "S", "K", "P", "SS", "ILB", "FS", "LS", "DB"]
+            , "Height_m": [1.91, 1.79, 1.85, 1.88, 1.96, 1.97, 1.90, 1.87, 1.97, 1.92, 1.88, 1.90, 1.90, 1.87, 1.82, 1.84, 1.83, 1.88, 1.84, 1.90, 1.84, 1.88, 1.82]
+            , "Weight_kg": [102.1, 95.3, 111.1, 90.7, 114.6, 140.6, 141.8, 136.1, 120.2, 141.8, 152.0, 110.0, 108.9, 113.4, 87.4, 95.9, 92.08, 97.52, 95.9, 110.0, 95.9, 108.86, 87.4]
+            , "Chest_rad_m": [0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191, 0.191]
+        }).with_columns([
+            pl.col("Height_m").cast(pl.Float32)
+            , pl.col("Weight_kg").cast(pl.Float32)
+            , pl.col("Chest_rad_m").cast(pl.Float32)
+            , pl.col("Position").cast(pl.Categorical)
+        ])
+
+        
+        Player_path = "F:/Data/NFL-Punt-Analytics-Competition/player_punt_data.csv"
+        position = pl.read_csv(Player_path).select(["GSISID", "Position"])
+        position = position.with_columns([
+            pl.col("GSISID").cast(pl.Int32)
+            , pl.col("Position").cast(pl.Categorical)
+        ])
+
+        position = position.join(
+            body_data
+            , on='Position'
+            , how='left'
+        )
+
+        df = df.with_columns([
+            pl.col("GSISID").cast(pl.Int32)
+        ])
+
+        df = df.join(
+            position
+            , on='GSISID'
             , how='left'
         )    
 
@@ -327,8 +508,74 @@ def impulse_calculator(df):
         return None
     
 
-###############################################################################
+def column_corrector(df):
+    import polars as pl # type: ignore
+    """
+    Add a Play_Time column that acts like the 'time' column did in the injury dataset. 
+    Each PlayKey will start at 0.0 and increase by 0.1 for each subsequent record.
+    """
+    df = df.with_columns([
+        pl.concat_str([
+            pl.col('GSISID').cast(pl.Int32).cast(pl.Utf8)
+            , pl.lit('-')
+            , pl.col('GameKey').cast(pl.Utf8)
+            , pl.lit('-')
+            , pl.col('PlayID').cast(pl.Utf8)
+        ]).alias('PlayKey')
+    ])
+     
     
+    df = df.select([
+        'PlayKey'
+        , 'Time'
+        , 'x'
+        , 'y'
+        , 'o'
+        , 'dir'
+        , 'GSISID'
+        ]).rename({"Time":"DateTime"})
+
+    df = df.sort(['PlayKey', 'DateTime'])
+
+    df = df.with_columns(
+        (pl.arange(0, pl.len()) * 0.1).over("PlayKey").cast(pl.Int32).alias("time")
+        ).with_columns([pl.col('GSISID').cast(pl.Int32)])  
+    
+    df = df.drop(['DateTime'])
+    
+    return df
+
+
+def clean_review():
+    import polars as pl #type: ignore
+    from DataHandler import data_shrinker
+
+    review = pl.read_csv("F:/Data/NFL-Punt-Analytics-Competition/video_review.csv")
+    review, schema = data_shrinker(review)
+    review = review.with_columns([
+            pl.concat_str([
+                pl.col('GSISID').cast(pl.Int32).cast(pl.Utf8)
+                , pl.lit('-')
+                , pl.col('GameKey').cast(pl.Utf8)
+                , pl.lit('-')
+                , pl.col('PlayID').cast(pl.Utf8)
+            ]).alias('PlayKey')
+        ]).drop(['Season_Year', 'GameKey', 'PlayID', 'GSISID', 'Turnover_Related', 'Friendly_Fire'])
+    
+    return review
+
+
+def add_review_data(df, review):
+
+    df = df.join(
+        review
+        , on="PlayKey"
+        , how="inner"    
+        )
+    
+    return df
+
+###############################################################################
 #### Summary Output
 def summary_calculator(df):
     """
@@ -448,12 +695,12 @@ def injury_summary_maker(group_dir):
 
 
 ###############################################################################
-
 #### Tracking Output
 def tracking_injuries(group_dir, main_dir):
     from DataHandler import data_loader
-    import polars as pl # type: ignore
     import os
+    import polars as pl # type: ignore
+    pl.enable_string_cache()
 
     # Read in the PlayKeys from the injury file to isolate PlayKeys associated with injury paths
     injuryPlayKeys = data_loader('injuries')
@@ -472,7 +719,10 @@ def tracking_injuries(group_dir, main_dir):
             # Read the Parquet file
             df = pl.read_parquet(file_path)
             
-            # Inner join with unique_gsisid to filter rows - Using inner since this is going to Viz and we need all data there. 
+            # Ensure PlayKey is of type Utf8
+            df = df.with_columns(pl.col("PlayKey").cast(pl.Utf8))
+            
+            # Inner join with unique_gsisid to filter rows
             filtered_df = df.join(PlayKeys, on="PlayKey", how="inner")
             
             # Append to the list of filtered dataframes
