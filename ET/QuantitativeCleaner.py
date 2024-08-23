@@ -165,7 +165,7 @@ def process_and_save_concussion_data():
             
 
             # Read the CSV into polars DF
-            df = pl.read_csv(file_path, truncate_ragged_lines=True)
+            df = pl.read_csv(file_path, truncate_ragged_lines=True, ignore_errors=True)
             df, schema = data_shrinker(df)
             df = (df
                 .pipe(column_corrector)
@@ -538,7 +538,7 @@ def column_corrector(df):
     df = df.sort(['PlayKey', 'DateTime'])
 
     df = df.with_columns(
-        (pl.arange(0, pl.len()) * 0.1).over("PlayKey").cast(pl.Int32).alias("time")
+        (pl.arange(0, pl.len()) * 0.1).over("PlayKey").cast(pl.Float32).alias("time")
         ).with_columns([pl.col('GSISID').cast(pl.Int32)])  
     
     df = df.drop(['DateTime'])
@@ -673,6 +673,32 @@ def collect_summaries(group_dir):
     return summary_df
 
 
+def collect_concussion_summaries(group_dir="F:/Data/Processing_data/concussion_output"):
+    import polars as pl
+    import os
+
+    # Initialize an empty list for the dataframes
+    summary_dfs = []
+
+    # Iterate through files in the directory
+    for file in os.listdir(group_dir):
+        if file.startswith("NGS-"):
+            file_path = os.path.join(group_dir, file)
+            
+            # Read the Parquet file
+            df = pl.read_parquet(file_path)
+            
+            # Apply the summary_calculator function
+            temp_df = summary_calculator(df)
+            
+            # Append to the list of summary dataframes
+            summary_dfs.append(temp_df)
+
+    # Concatenate all summary dataframes
+    summary_df = pl.concat(summary_dfs)  
+
+    return summary_df
+
 
 def injury_summary_maker(group_dir):
     """
@@ -692,6 +718,28 @@ def injury_summary_maker(group_dir):
 
     qual_quant.write_parquet(qual_quant_path)
     print(f"Saved the full summary with qualitative and quantitative features at {qual_quant_path}")
+
+
+def concussion_summary_maker(group_dir="F:/Data/Processing_data/concussion_output"): 
+    """
+    Joins the qualitative and quantitative summary data from the concussion sets
+    """
+    import polars as pl # type: ignore
+    pl.enable_string_cache()
+
+    # Read
+    qual_path = "F:/Data/Processing_data/QualitativeConcussions.parquet"
+    
+    #Write    
+    qual_quant_path = "F:/Data/Processing_data/Full_Summary_Concussions.parquet"
+
+    quant = collect_concussion_summaries(group_dir)
+    quals = pl.read_parquet(qual_path).drop(['GSISID', 'GameKey', 'PlayID', 'Number', 'Game_Date', 'YardLine', 'Quarter', 'Start_Time'])
+
+    qual_quant = quals.join(quant, on="PlayKey", how="inner")
+
+    qual_quant.write_parquet(qual_quant_path)
+    print(f"Saved the full summary with qualitative and quantitative features at {qual_quant_path}")  
 
 
 ###############################################################################
