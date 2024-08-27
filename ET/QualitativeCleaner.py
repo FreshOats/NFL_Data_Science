@@ -14,6 +14,7 @@ def clean_injury_qual():
     df = table_joiner(analysis) 
     df = injury_interpolator(df, analysis)
     df = stadium_cleaner(df)
+    df = play_cleaner(df)
     df = weather_cleaner(df)
     df, schema = data_shrinker(df)
     df.write_parquet(injury_qual_path)
@@ -273,6 +274,26 @@ def stadium_cleaner(df):
     df = df.with_columns(pl.col("StadiumType").replace(stadium_dict)) # This uses the dict to assign naming conventions
 
     print(f"Someone managed to clean up those stadiums!")
+    return df
+
+
+def play_cleaner(df):
+    """
+    Reduces the number of play types listed as Kickoff or Punt plays to just those two types. 
+    """
+    import polars as pl  # type: ignore
+
+    play_dict = {
+        'Kickoff Not Returned': 'Kickoff'
+        , 'Kickoff Returned': 'Kickoff'
+        , 'Punt Not Returned': 'Punt'
+        , 'Punt Returned': 'Punt'
+        , '0': 'Unknown'
+        }
+
+    df = df.with_columns(pl.col("PlayType").replace(play_dict)) # This uses the dict to assign naming conventions
+
+    print(f"Plays have been set!")
     return df
 
 

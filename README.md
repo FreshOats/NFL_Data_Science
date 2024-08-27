@@ -177,4 +177,10 @@ didn't incur the same injury?
 
     
 
-    
+**********
+
+IDEA: The number of samples out of the box is a massive 29,000 non-injury plays compared to 77 injuries, which will be cut down to about 50 when performing the train-test split. 
+
+Since I want to know what Physical parameters are leading to the injuries, I can look at similar plays by filtering for the playtype and position. Keeping fieldtype as a parameter is fine. 
+
+First I need to look at the 

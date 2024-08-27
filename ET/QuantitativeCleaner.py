@@ -674,7 +674,7 @@ def collect_summaries(group_dir):
 
 
 def collect_concussion_summaries(group_dir="F:/Data/Processing_data/concussion_output"):
-    import polars as pl
+    import polars as pl #type: ignore
     import os
 
     # Initialize an empty list for the dataframes
@@ -705,6 +705,7 @@ def injury_summary_maker(group_dir):
     Joins the qualitative and quantitative summary data
     """
     import polars as pl # type: ignore
+    pl.enable_string_cache()
     # Read
     qual_path = "F:/Data/Processing_data/QualitativeInjuries.parquet"
     
