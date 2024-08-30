@@ -13,7 +13,7 @@ def optimize_injury_data():
     injury_tracking_path = "F:/Data/nfl-playing-surface-analytics/PlayerTrackData.csv"
     optimized_path = "F:/Data/Processing_data/OptimizedTrackData.parquet"
 
-    df = create_initial_lazyframe(injury_tracking_path).collect(streaming=True)
+    # df = create_initial_lazyframe(injury_tracking_path).collect(streaming=True)
     optimized_df, optimized_schema = data_shrinker(df)
     
     # Cast the DataFrame columns to the types specified in optimized_schema
@@ -50,6 +50,101 @@ def clean_injury_quant():
 
 
 
+def track_all_quant(trackinginjuries_path, opponentplays_path):
+    """ 
+    Concatenates the two tracking dataframes for Viz creation with all injuries. 
+    This additionally adds an InjuryType column for concussions and other. 
+    """
+    from DataHandler import data_loader
+    import polars as pl #type: ignore
+    pl.enable_string_cache()
+
+    #Write 
+    output_path = "F:/Data/Processing_data/All_Tracking.parquet"
+
+    body_part = data_loader('injuries').select(['PlayKey', 'BodyPart']).filter(pl.col("PlayKey").is_not_null())
+    concussions = pl.read_parquet(opponentplays_path)
+    injuries = pl.read_parquet(trackinginjuries_path)
+
+
+    concussions = concussions.with_columns(
+        pl.when(pl.col("OpponentKey").is_not_null())
+            .then(pl.lit("Concussion"))
+            .otherwise(pl.lit("No Injury"))
+            .alias("InjuryType")
+            )
+
+    injuries = injuries.join(
+        body_part
+        , on='PlayKey'
+        , how='left' 
+        ).rename({"BodyPart": "InjuryType"}
+        ).with_columns(
+            pl.col("PlayKey").alias('InjuryKey')
+        )
+    
+
+    common_columns = ["PlayKey"
+                    , "time"
+                    , "x"
+                    , "y"
+                    , "dir"
+                    , "o"
+                    , "Angle_Diff"
+                    , "Displacement"
+                    , "Speed"
+                    , "vx"
+                    , "vy"
+                    , "omega_dir"
+                    , "omega_o"
+                    , "omega_diff"
+                    , "Position"
+                    , "Height_m"
+                    , "Weight_kg"
+                    , "Chest_rad_m"
+                    , "px"
+                    , "py"
+                    , "moment"
+                    , "moment_upper"
+                    , "p_magnitude"
+                    , "L_dir"
+                    , "L_diff"
+                    , "Jx"
+                    , "Jy"
+                    , "J_magnitude"
+                    , "torque"
+                    , "torque_internal"
+                    , "InjuryType"
+                    , "InjuryKey"
+                    ]
+
+    additional_columns = ["GSISID"
+                        , "Player_Activity_Derived"
+                        , "Primary_Impact_Type"
+                        , "Primary_Partner_GSISID"
+                        , "Primary_Partner_Activity_Derived"
+                        , "OpponentKey"
+                        ]
+
+    concussions = concussions.select(common_columns + additional_columns)
+
+    for col in additional_columns:
+        if col not in injuries.columns:
+            injuries = injuries.with_columns(pl.lit(None).alias(col))
+
+    injuries = injuries.select(common_columns + additional_columns)
+
+    combined_df = pl.concat([concussions, injuries])
+    combined_df = combined_df.sort(["PlayKey", "time"])
+
+
+
+    combined_df.write_parquet(output_path)
+
+    print(f"Concatenated all Injury and Concussion tracking data to {output_path}")
+
+
+
 ###############################################################################
 #### Primary Concussion Tranformation Functions ####
 
@@ -59,12 +154,11 @@ def clean_concussion_quant():
     After processing, the data are filtered and concatenated into two different datasets: summary, and tracking
     """
 
-    analysis = 'concussion'
-    source_dir = "F:/Data/NFL-Punt-Analytics-Competition/"
-
+    # analysis = 'concussion'
+    # source_dir = "F:/Data/NFL-Punt-Analytics-Competition/"
     
-
-
+    review = clean_review()
+    create_concussion_review_df(review)
 
 
 
@@ -76,22 +170,6 @@ def clean_concussion_quant():
 
 ###############################################################################
 #### Processing Subroutines
-def create_initial_lazyframe(injury_tracking_path):
-    import polars as pl # type: ignore 
-    return pl.scan_csv(injury_tracking_path, truncate_ragged_lines=True, infer_schema_length=10000, ignore_errors=True).drop(['event', 's', 'dis'])
-
-
-# def transform_injury_data(optimized_path, group_dir):
-#     """
-#     Full transform process for the surface injury data.
-#     Output options are for returning a summary df to the database or the full tracking with 
-#     additional columns added
-#     """
-
-#     if __name__ == "__main__":
-#         process_file(optimized_path, group_dir)
-
-
 def process_and_save_playkey_group(df, playkeys, group_dir, group_number):
     import polars as pl # type: ignore
     import os
@@ -238,7 +316,9 @@ def create_concussion_review_df(review):
         , how = 'left'
     )
 
-    combined_df.write_parquet(output_file_path)
+    result_df = ConcussionKeymaker(combined_df)
+
+    result_df.write_parquet(output_file_path)
 
     print(f"Processed and saved: {output_file_path}")
 
@@ -442,7 +522,7 @@ def body_builder_conc(df):
         return df.filter(pl.col('Position').is_not_null())    
         
     except Exception as e: 
-        print(f"An error occurred during body_builder: {e}")
+        print(f"Something broke the body_builder: {e}")
         return None
 
 
@@ -504,7 +584,7 @@ def impulse_calculator(df):
         ])
     
     except Exception as e: 
-        print(f"An error occurred during the impulse_calculator, which surprises no one.")
+        print(f"Something got fucked up in the impulse_calculator, which surprises no one.")
         return None
     
 
@@ -784,3 +864,39 @@ def tracking_injuries(group_dir, main_dir):
     final_df.write_parquet(os.path.join(main_dir, "TrackingInjuries.parquet"))
 
     print("Processing complete. Filtered summary dataframe saved as 'TrackingInjuries.parquet'")
+
+
+def ConcussionKeymaker(combined_df):
+    # Create a new column called "ConcussionKey" which will be the PlayerKey for the injured player associated with the play
+    import polars as pl #type: ignore
+    
+    combined_df = combined_df.with_columns(
+    pl.when(pl.col('Player_Activity_Derived').is_not_null())
+    .then(pl.col('PlayKey'))
+    .otherwise(None)
+    .alias('InjuryKey')
+    )
+
+    # Create a temporary dataframe with non-null OpponentKeys
+    concussion_df = (
+        combined_df.filter(pl.col('OpponentKey').is_not_null())
+        .select(
+            pl.col('PlayKey').alias('InjuryKey')
+            , 'OpponentKey'
+        )
+        .unique()
+    )
+
+    # Perform a left join between cf and concussion_df
+    result_df = combined_df.join(
+        concussion_df
+        , left_on='PlayKey'
+        , right_on='OpponentKey'
+        , how='left'
+    )
+
+    result_df = result_df.with_columns(
+        pl.coalesce('InjuryKey', 'InjuryKey_right').alias('InjuryKey')
+    ).drop('InjuryKey_right')
+
+    return result_df

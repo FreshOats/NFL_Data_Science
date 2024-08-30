@@ -5,7 +5,7 @@ def clean_injury_qual():
     """
     Applies data cleaning to surface injury data and writes to 'qualitative_injuries' as a csv file 
     """
-    from DataHandler import parquet_writer, data_shrinker
+    from DataHandler import data_shrinker
     import os 
 
     analysis = "injury"
