@@ -604,24 +604,48 @@ def column_corrector(df):
         ]).alias('PlayKey')
     ])
      
+    df = df.sort(['PlayKey', 'Time'])
+
+    df = df.with_columns([
+        pl.col('Time').str.strptime(
+            pl.Datetime
+            , format="%Y-%m-%d %H:%M:%S.%3f"
+            , strict=False
+        ).alias('Time')
+    ])
     
+    df = create_time_numeric(df)
+
     df = df.select([
         'PlayKey'
-        , 'Time'
+        , 'Time_numeric'
         , 'x'
         , 'y'
         , 'o'
         , 'dir'
         , 'GSISID'
-        ]).rename({"Time":"DateTime"})
-
-    df = df.sort(['PlayKey', 'DateTime'])
-
-    df = df.with_columns(
-        (pl.arange(0, pl.len()) * 0.1).over("PlayKey").cast(pl.Float32).alias("time")
-        ).with_columns([pl.col('GSISID').cast(pl.Int32)])  
+        ]).rename({"Time_numeric":"time"})
     
-    df = df.drop(['DateTime'])
+    return df
+
+
+def create_time_numeric(df):
+    import polars as pl #type: ignore
+    # Sort the dataframe by PlayKey and Time
+    df = df.sort(['PlayKey', 'Time'])
+    
+    # Create a new column with incrementing values for each PlayKey
+    df = df.with_columns([
+        pl.arange(0, pl.len()).over('PlayKey').alias('index')
+    ])
+    
+    # Calculate Time_numeric
+    df = df.with_columns([
+        (pl.col('index') * 0.1).alias('Time_numeric')
+    ])
+    
+    # Drop the temporary index column
+    df = df.drop('index')
     
     return df
 
@@ -650,7 +674,7 @@ def add_review_data(df, review):
     df = df.join(
         review
         , on="PlayKey"
-        , how="inner"    
+        , how="left"    
         )
     
     return df
@@ -866,37 +890,37 @@ def tracking_injuries(group_dir, main_dir):
     print("Processing complete. Filtered summary dataframe saved as 'TrackingInjuries.parquet'")
 
 
-def ConcussionKeymaker(combined_df):
-    # Create a new column called "ConcussionKey" which will be the PlayerKey for the injured player associated with the play
-    import polars as pl #type: ignore
+# def ConcussionKeymaker(combined_df):
+#     # Create a new column called "ConcussionKey" which will be the PlayerKey for the injured player associated with the play
+#     import polars as pl #type: ignore
     
-    combined_df = combined_df.with_columns(
-    pl.when(pl.col('Player_Activity_Derived').is_not_null())
-    .then(pl.col('PlayKey'))
-    .otherwise(None)
-    .alias('InjuryKey')
-    )
+#     combined_df = combined_df.with_columns(
+#     pl.when(pl.col('Player_Activity_Derived').is_not_null())
+#     .then(pl.col('PlayKey'))
+#     .otherwise(None)
+#     .alias('InjuryKey')
+#     )
 
-    # Create a temporary dataframe with non-null OpponentKeys
-    concussion_df = (
-        combined_df.filter(pl.col('OpponentKey').is_not_null())
-        .select(
-            pl.col('PlayKey').alias('InjuryKey')
-            , 'OpponentKey'
-        )
-        .unique()
-    )
+#     # Create a temporary dataframe with non-null OpponentKeys
+#     concussion_df = (
+#         combined_df.filter(pl.col('OpponentKey').is_not_null())
+#         .select(
+#             pl.col('PlayKey').alias('InjuryKey')
+#             , 'OpponentKey'
+#         )
+#         .unique()
+#     )
 
-    # Perform a left join between cf and concussion_df
-    result_df = combined_df.join(
-        concussion_df
-        , left_on='PlayKey'
-        , right_on='OpponentKey'
-        , how='left'
-    )
+#     # Perform a left join between cf and concussion_df
+#     result_df = combined_df.join(
+#         concussion_df
+#         , left_on='PlayKey'
+#         , right_on='OpponentKey'
+#         , how='left'
+#     )
 
-    result_df = result_df.with_columns(
-        pl.coalesce('InjuryKey', 'InjuryKey_right').alias('InjuryKey')
-    ).drop('InjuryKey_right')
+#     result_df = result_df.with_columns(
+#         pl.coalesce('InjuryKey', 'InjuryKey_right').alias('InjuryKey')
+#     ).drop('InjuryKey_right')
 
-    return result_df
+#     return result_df
