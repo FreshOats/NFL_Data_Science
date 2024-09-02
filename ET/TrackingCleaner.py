@@ -2,7 +2,7 @@
 ####################
 # Concatenate All Tracking Data
 
-def track_all(trackinginjuries_path, trackingconcussions_path):
+def track_all_quant(injury_record_path, injury_tracking_path, concussion_tracking_path):
     """ 
     Concatenates the two tracking dataframes for Viz creation with all injuries. 
     This additionally adds an InjuryType column for concussions and other. 
@@ -14,17 +14,18 @@ def track_all(trackinginjuries_path, trackingconcussions_path):
     #Write 
     output_path = "F:/Data/Processing_data/All_Tracking.parquet"
 
-    body_part = data_loader('injuries').select(['PlayKey', 'BodyPart']).filter(pl.col("PlayKey").is_not_null())
-    concussions = pl.read_parquet(trackingconcussions_path)
-    injuries = pl.read_parquet(trackinginjuries_path)
+    
+    body_part = pl.read_csv(injury_record_path).select(['PlayKey', 'BodyPart']).filter(pl.col("PlayKey").is_not_null())
+    concussions = pl.read_parquet(concussion_tracking_path)
+    injuries = pl.read_parquet(injury_tracking_path)
 
 
     concussions = concussions.with_columns(
-        pl.when(pl.col("OpponentKey").is_not_null())
+        pl.when(pl.col("InjuryKey") == pl.col("PlayKey"))
             .then(pl.lit("Concussion"))
             .otherwise(pl.lit("No Injury"))
             .alias("InjuryType")
-            )
+            ).drop("GSISID")
 
     injuries = injuries.join(
         body_part
@@ -70,11 +71,8 @@ def track_all(trackinginjuries_path, trackingconcussions_path):
                     , "InjuryKey"
                     ]
 
-    additional_columns = ["GSISID"
-                        , "Player_Activity_Derived"
-                        , "Primary_Impact_Type"
-                        , "Primary_Partner_GSISID"
-                        , "Primary_Partner_Activity_Derived"
+    additional_columns = ["PlayerActivity"
+                        , "ImpactType"
                         , "OpponentKey"
                         ]
 
