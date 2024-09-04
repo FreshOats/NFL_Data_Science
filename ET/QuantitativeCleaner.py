@@ -542,11 +542,11 @@ def impulse_calculator(df):
             (pl.col('vx') * pl.col('Weight_kg')).alias('px')
             , (pl.col('vy') * pl.col('Weight_kg')).alias('py')
 
-            # Calculate the moment of inertia of a rotating upright body (1/12 mr^2)
-            , (1/12 * pl.col('Weight_kg') * (pl.col('Chest_rad_m')**2)).alias('moment')
+            # Calculate the moment of inertia of a rotating upright body (1/2 mr^2)
+            , (1/2 * pl.col('Weight_kg') * (pl.col('Chest_rad_m')**2)).alias('moment')
             
             # Calculate the moment of inertia of the upper body turning upright with respect to waist (70% mass)
-            , (1/12 * (pl.col('Weight_kg')*0.7) * (pl.col('Chest_rad_m')**2)).alias('moment_upper')
+            , (1/2 * (pl.col('Weight_kg')*0.7) * (pl.col('Chest_rad_m')**2)).alias('moment_upper')
         
         ]).with_columns([
             # Calculate the magnitude of linear momentum

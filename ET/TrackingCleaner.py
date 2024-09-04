@@ -2,19 +2,20 @@
 ####################
 # Concatenate All Tracking Data
 
-def track_all_quant(injury_record_path, injury_tracking_path, concussion_tracking_path):
+def track_all_quant(injury_record_path, injury_tracking_path, concussion_tracking_path, output_path):
     """ 
     Concatenates the two tracking dataframes for Viz creation with all injuries. 
     This additionally adds an InjuryType column for concussions and other. 
     """
-    from DataHandler import data_loader
     import polars as pl #type: ignore
     pl.enable_string_cache()
 
-    #Write 
-    output_path = "F:/Data/Processing_data/All_Tracking.parquet"
+    import time
 
-    
+    #Write 
+    # output_path = "F:/Data/Processing_data/All_Tracking.parquet"
+
+    start_time = time.time()    
     body_part = pl.read_csv(injury_record_path).select(['PlayKey', 'BodyPart']).filter(pl.col("PlayKey").is_not_null())
     concussions = pl.read_parquet(concussion_tracking_path)
     injuries = pl.read_parquet(injury_tracking_path)
@@ -46,24 +47,24 @@ def track_all_quant(injury_record_path, injury_tracking_path, concussion_trackin
                     , "Angle_Diff"
                     , "Displacement"
                     , "Speed"
-                    , "vx"
-                    , "vy"
+                    # , "vx"
+                    # , "vy"
                     , "omega_dir"
                     , "omega_o"
                     , "omega_diff"
                     , "Position"
-                    , "Height_m"
-                    , "Weight_kg"
-                    , "Chest_rad_m"
-                    , "px"
-                    , "py"
-                    , "moment"
-                    , "moment_upper"
+                    # , "Height_m"
+                    # , "Weight_kg"
+                    # , "Chest_rad_m"
+                    # , "px"
+                    # , "py"
+                    # , "moment"
+                    # , "moment_upper"
                     , "p_magnitude"
                     , "L_dir"
                     , "L_diff"
-                    , "Jx"
-                    , "Jy"
+                    # , "Jx"
+                    # , "Jy"
                     , "J_magnitude"
                     , "torque"
                     , "torque_internal"
@@ -91,7 +92,9 @@ def track_all_quant(injury_record_path, injury_tracking_path, concussion_trackin
 
     combined_df.write_parquet(output_path)
 
-    print(f"Concatenated all Injury and Concussion tracking data to {output_path}")
+    end_time = time.time()
+    execution_time = end_time - start_time
+    print(f"Concatenated all Injury and Concussion tracking data to {output_path}. Execution time: {execution_time} seconds.")
 
 
 #############################################################################
@@ -105,15 +108,18 @@ def process_ngs_files(source_dir, output_dir):
     """
     import polars as pl # type: ignore
     import os
+    import time
+
+    start_time = time.time()
     # List all NGS files in the directory
     ngs_files = [f for f in os.listdir(source_dir) if f.startswith('NGS-')]
 
-    review = clean_review()
+    
     # Process each file and store the results
     processed_dfs = []
     for file in ngs_files:
         file_path = os.path.join(source_dir, file)
-        processed_df = transform_concussion_tracking(file_path, review)
+        processed_df = transform_concussion_tracking(file_path)
         processed_dfs.append(processed_df)
 
     # Concatenate all processed DataFrames
@@ -123,12 +129,14 @@ def process_ngs_files(source_dir, output_dir):
     output_path = os.path.join(output_dir, 'TrackingConcussions.parquet')
     combined_df.write_parquet(output_path)
 
-    print(f"Combined processed data saved to: {output_path}")
+    end_time = time.time()
+    execution_time = end_time - start_time
+    print(f"Combined processed data saved to: {output_path}. Execution time: {execution_time} seconds.")
     return combined_df
 
 
 
-def transform_concussion_tracking(file_path, review):
+def transform_concussion_tracking(file_path):
     """
     Main Transformation function for the concussion data. 
     """
@@ -138,7 +146,7 @@ def transform_concussion_tracking(file_path, review):
     # Read and filter for injured pairs
     df = pl.read_csv(file_path, truncate_ragged_lines=True, ignore_errors=True)
     df = column_corrector(df)
-    df = create_opponent_plays(df, review)
+    df = create_opponent_plays(df, 'tracking')
     df = reduce_float_precision(df)
 
     # Mechanics Processing
@@ -152,15 +160,200 @@ def transform_concussion_tracking(file_path, review):
     return df
 
 
+def transform_concussion_summary_files(file_path):
+    """
+    Main Transformation function for the concussion data. 
+    """
+    import polars as pl # type: ignore
+    pl.enable_string_cache()
+
+    # Read and filter for injured pairs
+    df = pl.read_csv(file_path, truncate_ragged_lines=True, ignore_errors=True)
+    df = column_corrector(df)
+    df = create_opponent_plays(df, 'summary')
+    df = reduce_float_precision(df)
+
+    # Mechanics Processing
+    df = (df
+          .pipe(angle_corrector)
+          .pipe(velocity_calculator)
+          .pipe(body_builder_conc)
+          .pipe(impulse_calculator)
+          .pipe(summary_calculator)
+          )
+    
+    return df
+
+
+
+def collect_concussion_summaries(group_dir):
+    import polars as pl #type: ignore
+    import os
+
+    # Initialize an empty list for the dataframes
+    summary_dfs = []
+
+    # Iterate through files in the directory
+    for file in os.listdir(group_dir):
+        if file.startswith("NGS-"):
+            file_path = os.path.join(group_dir, file)
+            
+            # Read the Parquet file
+            df = pl.read_parquet(file_path)
+            
+            # Append to the list of summary dataframes
+            summary_dfs.append(df)
+
+    # Concatenate all summary dataframes
+    summary_df = pl.concat(summary_dfs)  
+
+    return summary_df
+
+
+def process_concussion_summary():
+    """
+    Extract and Transform the tracking data for the concussion dataset per file.  
+    These datasets will then be used to create the summary data and then filter 
+    for the injuries using the video review information to get only the concussion plays for
+    the player and their opponent, which will be a different playkey based on GSISID, but the latter
+    portion will match. 
+    """
+    import os
+    import time
+    import polars as pl # type: ignore
+    pl.enable_string_cache()
+    
+    start_time = time.time()
+    
+
+    source_dir = "F:/Data/NFL-Punt-Analytics-Competition/"
+    concussion_group_dir = "F:/Data/Clean_Data/concussion_output/"
+    os.makedirs(concussion_group_dir, exist_ok=True)
+
+
+    for file in os.listdir(source_dir):
+        if file.startswith("NGS-"):
+            file_path = os.path.join(source_dir, file)
+            
+            df = transform_concussion_summary_files(file_path)
+            
+            output_file_path = os.path.join(concussion_group_dir, file.replace(".csv", ".parquet"))
+            df.write_parquet(output_file_path)
+
+            print(f"Processed and saved: {output_file_path}")
+
+    end_time = time.time()
+    execution_time = (end_time - start_time)/60
+    print(f"For fuck's sake that took {execution_time} minutes. Finally done processing and saving the concussion files.")
+    print(f"Continuing to concatenate the summaries. This shouldn't take as long")
+
+    review_df = collect_concussion_summaries(concussion_group_dir)
+
+    return review_df
+
+
 ################################################################
 #### Injury Processing #####
+
+def transform_and_save_injury_data(injury_tracking_path, injury_output_dir, main_dir):
+    """
+    Full transform process for the surface injury data. 
+    """
+    import time
+    start_time = time.time()
+    optimized_df = optimize_lazyframe(injury_tracking_path)
+    process_file(optimized_df, injury_output_dir, group_size=15000)
+    tracking_injuries(injury_output_dir, main_dir)
+    end_time = time.time()
+    execution_time = end_time - start_time
+    print(f"Execution time: {execution_time} seconds.")
+    
+
+
+def create_initial_lazyframe(injury_tracking_path):
+    import polars as pl # type: ignore
+    return pl.scan_csv(injury_tracking_path
+                       , truncate_ragged_lines=True
+                       , infer_schema_length=10000
+                       , ignore_errors=True).drop(['event', 's', 'dis'])
+
+
+def optimize_lazyframe(injury_tracking_path): # Changed name to optimize_injury_data()
+    """
+    This function opens the original tracking csv, reduces size by casting to less expensive data types, 
+    and then saves the optimized tracking dataset to file. It does not return a dataframe, so any use will 
+    be expected to call from the saved optimized file. 
+    """
+    import polars as pl # type: ignore
+    from DataHandler import data_shrinker
+
+    df = create_initial_lazyframe(injury_tracking_path).collect(streaming=True)
+    optimized_df, optimized_schema = data_shrinker(df)
+    
+    # Cast the DataFrame columns to the types specified in optimized_schema
+    for column, dtype in optimized_schema.items():
+        optimized_df = optimized_df.with_columns(pl.col(column).cast(dtype))
+
+    return optimized_df
+
+
+def process_file(optimized_df, output_dir, group_size):
+    """"
+    Breaks up the file into smaller chunks, making sure not to break up PlayKeys
+    since the times for max and mean must be maintainted per PlayKey
+    """
+    import math
+    import polars as pl # type: ignore
+    
+    # Get unique PlayKey values
+    unique_playkeys = optimized_df["PlayKey"].unique().to_list()
+    
+    # Calculate the number of groups
+    num_groups = math.ceil(len(unique_playkeys) / group_size)
+    
+    # Process each group of PlayKeys
+    for i in range(num_groups):
+        start_idx = i * group_size
+        end_idx = min((i + 1) * group_size, len(unique_playkeys))
+        playkey_group = unique_playkeys[start_idx:end_idx]
+        process_and_save_playkey_group(optimized_df, playkey_group, output_dir, i + 1)
+
+    print("Processing complete.")
+
+
+def process_and_save_playkey_group(lazy_df, playkeys, output_dir, group_number):
+    """
+    Performs the transformation to add mechanics data to the tracking data
+    This is applied to each individual group, saving as a parquet file. 
+    """
+    import os
+    import polars as pl # type: ignore
+    # Filter the lazy DataFrame for the specific PlayKeys
+    group_df = lazy_df.filter(pl.col("PlayKey").is_in(playkeys))
+    
+    # Processing
+    group_df = (group_df
+                .pipe(angle_corrector)
+                .pipe(velocity_calculator)
+                .pipe(body_builder_inj)
+                .pipe(impulse_calculator))
+
+    # Create the output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Save the DataFrame for this group as a Parquet file
+    output_file = os.path.join(output_dir, f"group_{group_number}.parquet")
+    group_df.write_parquet(output_file)
+    print(f"Saved data for PlayKey group: {group_number}")
+
+
 
 def tracking_injuries(group_dir, main_dir):
     """
     Main transformation function for the injury data. 
     """
-    from DataHandler import data_loader
     import os
+    import time
     import polars as pl # type: ignore
     pl.enable_string_cache()
 
@@ -195,12 +388,40 @@ def tracking_injuries(group_dir, main_dir):
     final_df = pl.concat(filtered_dfs)
 
     # Save the concatenated dataframe
-    final_df.write_parquet(os.path.join(main_dir, "TrackingInjuries.parquet"))
+    output_path = os.path.join(main_dir, "TrackingInjuries.parquet")
+    final_df.write_parquet(output_path)
 
-    print("Processing complete. Filtered summary dataframe saved as 'TrackingInjuries.parquet'")
+    print(f"Combined processed data saved to: {output_path}.")
+    
 
 
+def collect_injury_summaries(group_dir):
 
+    import polars as pl # type: ignore
+    import os
+
+    # Initialize an empty list to store dataframes
+    summary_dfs = []
+
+    # Iterate through files in the directory
+    for file in os.listdir(group_dir):
+        if file.startswith("group_"):
+            file_path = os.path.join(group_dir, file)
+            
+            # Read the Parquet file
+            df = pl.read_parquet(file_path)
+            
+            # Apply the summary_calculator function
+            temp_df = summary_calculator(df)
+            
+            # Append to the list of summary dataframes
+            summary_dfs.append(temp_df)
+
+    # Concatenate all summary dataframes
+    summary_df = pl.concat(summary_dfs)
+
+
+    return summary_df
 
 
 ###############################################################
@@ -209,6 +430,7 @@ def tracking_injuries(group_dir, main_dir):
 
 
 def create_time_numeric(df):
+    import polars as pl #type: ignore
     # Sort the dataframe by PlayKey and Time
     df = df.sort(['PlayKey', 'Time'])
     
@@ -229,6 +451,7 @@ def create_time_numeric(df):
 
 
 def reduce_float_precision(df):
+    import polars as pl # type: ignore
     for col in df.columns:
         if df[col].dtype == pl.Float64:
             df = df.with_columns(pl.col(col).cast(pl.Float32))
@@ -237,10 +460,16 @@ def reduce_float_precision(df):
     return df
 
 
-def create_opponent_plays(df, review): 
-    import polars as pl #Type: ignore
+def create_opponent_plays(df, method='tracking'): 
+    import polars as pl # type: ignore
     pl.enable_string_cache()
 
+    if method == 'summary':
+        join_type = 'left'
+    else: 
+        join_type = 'inner'
+
+    
     # Establish the column header order 
     column_order = [
         'PlayKey'
@@ -256,11 +485,12 @@ def create_opponent_plays(df, review):
         , 'InjuryKey'
     ]
 
+    review = clean_review()
     # First join: review.InjuryKey = df.PlayKey
     df_joined_injury = df.join(
         review
         , on='PlayKey'
-        , how='inner'
+        , how=join_type
         ).drop(['Primary_Partner_GSISID'
                 , 'Primary_Partner_Activity_Derived'
                 ]
@@ -273,7 +503,7 @@ def create_opponent_plays(df, review):
         review
         , left_on='PlayKey'
         , right_on='OpponentKey'
-        , how='inner'
+        , how=join_type
         ).drop(['PlayKey_right'
             , 'Player_Activity_Derived'
             , 'Primary_Partner_GSISID']
@@ -291,7 +521,7 @@ def create_opponent_plays(df, review):
 
 
 def clean_review():
-    import polars as pl
+    import polars as pl # type: ignore
     pl.enable_string_cache()
     from DataHandler import data_shrinker
 
@@ -335,6 +565,9 @@ def column_corrector(df):
     Add a Play_Time column that acts like the 'time' column did in the injury dataset. 
     Each PlayKey will start at 0.0 and increase by 0.1 for each subsequent record.
     """
+    # Filter out rows with GSISID values that are too large for Int32
+    df = df.filter(pl.col('GSISID') <= 1000000)  # Maximum value for Int32
+
     df = df.with_columns([
         pl.concat_str([
             pl.col('GSISID').cast(pl.Int32).cast(pl.Utf8)
@@ -590,10 +823,10 @@ def impulse_calculator(df):
             , (pl.col('vy') * pl.col('Weight_kg')).alias('py')
 
             # Calculate the moment of inertia of a rotating upright body (1/12 mr^2)
-            , (1/12 * pl.col('Weight_kg') * (pl.col('Chest_rad_m')**2)).alias('moment')
+            , (1/2 * pl.col('Weight_kg') * (pl.col('Chest_rad_m')**2)).alias('moment')
             
             # Calculate the moment of inertia of the upper body turning upright with respect to waist (70% mass)
-            , (1/12 * (pl.col('Weight_kg')*0.7) * (pl.col('Chest_rad_m')**2)).alias('moment_upper')
+            , (1/2 * (pl.col('Weight_kg')*0.7) * (pl.col('Chest_rad_m')**2)).alias('moment_upper')
         
         ]).with_columns([
             # Calculate the magnitude of linear momentum
@@ -633,3 +866,70 @@ def impulse_calculator(df):
     except Exception as e: 
         print(f"Something got fucked up in the impulse_calculator, which surprises no one.")
         return None
+    
+
+
+########################################
+
+# Summary Calculations
+def summary_calculator(df):
+    """
+    Collects dispalcement and distance, means and maxima for the for each of the parameters collected
+    and outputs to a quantitative summary table that can be joined to the qualitative table for machine learning.  
+    """
+    import polars as pl # type: ignore
+
+    result = df.select([
+        "PlayKey"
+        , pl.col("Position")
+        , pl.col("Displacement").sum().over("PlayKey").alias("Distance")
+        , pl.col("x").first().over("PlayKey").alias("start_x")
+        , pl.col("y").first().over("PlayKey").alias("start_y")
+        , pl.col("x").last().over("PlayKey").alias("end_x")
+        , pl.col("y").last().over("PlayKey").alias("end_y")
+        , pl.col("Angle_Diff").max().over("PlayKey").alias("Max_Angle_Diff")
+        , pl.col("Angle_Diff").mean().over("PlayKey").alias("Mean_Angle_Diff")
+        , pl.col("Speed").max().over("PlayKey").alias("Max_Speed")
+        , pl.col("Speed").mean().over("PlayKey").alias("Mean_Speed")
+        , pl.col("J_magnitude").max().over("PlayKey").alias("Max_Impulse")
+        , pl.col("J_magnitude").mean().over("PlayKey").alias("Mean_Impulse")
+        , pl.col("torque").max().over("PlayKey").alias("Max_Torque")
+        , pl.col("torque").mean().over("PlayKey").alias("Mean_Torque")
+        , pl.col("torque_internal").max().over("PlayKey").alias("Max_Int_Torque")
+        , pl.col("torque_internal").mean().over("PlayKey").alias("Mean_Int_Torque")
+
+        ]).unique(subset=["PlayKey"])
+
+
+    # Calculate the displacement
+    result = result.with_columns([
+        (((pl.col("end_x") - pl.col("start_x"))**2 + 
+          (pl.col("end_y") - pl.col("start_y"))**2)**0.5)
+        .alias("Displacement")
+        ]).with_columns([
+            (pl.col("Distance") - pl.col("Displacement")).alias("Path_Diff")
+        ])
+
+     
+    # Select only the required columns
+    result = result.select([
+        'PlayKey'
+        , 'Position'
+        , 'Distance'
+        , 'Displacement'
+        , 'Path_Diff'
+        , 'Max_Angle_Diff'
+        , 'Mean_Angle_Diff'
+        , 'Max_Speed'
+        , 'Mean_Speed'
+        , 'Max_Impulse'
+        , 'Mean_Impulse'
+        , 'Max_Torque'
+        , 'Mean_Torque'
+        , 'Max_Int_Torque'
+        , 'Mean_Int_Torque'
+      
+    ]).sort("PlayKey")
+
+
+    return result

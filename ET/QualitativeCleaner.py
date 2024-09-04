@@ -17,10 +17,10 @@ def clean_injury_qual():
     df = play_cleaner(df)
     df = weather_cleaner(df)
     df, schema = data_shrinker(df)
-    df.write_parquet(injury_qual_path)
+    # df.write_parquet(injury_qual_path)
 
     print('Injuries have been cleaned and dressed.')
-    # return df
+    return df
 
 
 ##### Primary Concussion Cleaning Function #####
@@ -28,7 +28,8 @@ def clean_concussions():
     """
     Applies data cleaning to surface injury data and writes to 'qualitative_injuries' as a csv file 
     """
-    from DataHandler import parquet_writer, data_shrinker
+    from DataHandler import data_shrinker
+    import polars as pl #type: ignore
 
     analysis = "concussion"
     concussion_qual_path = "F:/Data/Processing_data/QualitativeConcussions.parquet"
@@ -40,12 +41,29 @@ def clean_concussions():
     df = turf_cleaner(df)
     df = cancellation_cleaner(df)
     df = score_splitter(df)
+    df = df.with_columns([
+        pl.col('Player_Activity_Derived').alias('PlayerActivity')
+        , pl.col('Primary_Impact_Type').alias('ImpactType')
+        ]).drop(['GSISID'
+                  , 'GameKey'
+                  , 'PlayID'
+                  , 'Number'
+                  , 'Game_Date'
+                  , 'YardLine'
+                  , 'Start_Time'
+                  , 'Player_Activity_Derived'
+                  , 'Primary_Impact_Type'
+                  , 'Primary_Partner_Activity_Derived'
+                  , 'Primary_Partner_GSISID'
+                  , 'Home_Score'
+                  , 'Visiting_Score'
+                  ])
     df, schema = data_shrinker(df)
-    df.write_parquet(concussion_qual_path)
-    del df
+    # df.write_parquet(concussion_qual_path)
+    # del df
 
     print('Concussions have been assessed and cleared for play.')
-    # return df
+    return df
 
 
 #############################################################################
@@ -55,6 +73,8 @@ def table_joiner(analysis):
     Joins the two non-ngs tables in the injury data, and joins 5 non-ngs tables from the concussion dataset. 
     """
     import polars as pl # type: ignore
+    # Enable global string cache
+    pl.enable_string_cache()
     from DataHandler import data_loader
 
     valid_analyses = ['injury', 'concussion']
@@ -227,6 +247,8 @@ def stadium_cleaner(df):
     All games with dates were checked to ensure null values were indeed outdoor games. 
     """
     import polars as pl  # type: ignore
+    # Enable global string cache
+    pl.enable_string_cache()
 
     stadium_dict = {
         'Outdoor': 'Outdoor'
@@ -282,6 +304,8 @@ def play_cleaner(df):
     Reduces the number of play types listed as Kickoff or Punt plays to just those two types. 
     """
     import polars as pl  # type: ignore
+    # Enable global string cache
+    pl.enable_string_cache()
 
     play_dict = {
         'Kickoff Not Returned': 'Kickoff'
@@ -302,6 +326,8 @@ def weather_cleaner(df):
      Uses mapping to limit the number of different weather groupings. 
      """
      import polars as pl # type: ignore
+     # Enable global string cache
+     pl.enable_string_cache()
 
      # If using the concussion dataset, rename the GameWeather column to Weather
      if "GameWeather" in df.columns:
@@ -424,8 +450,10 @@ def weather_cleaner(df):
 
 def turf_cleaner(df):
     import polars as pl # type: ignore
+    # Enable global string cache
+    pl.enable_string_cache()
 
-    # df = df.rename({"Turf": "FieldType"})
+    df = df.rename({"Turf": "FieldType"})
 
     turf_dict = {
         'Grass': 'Natural',
