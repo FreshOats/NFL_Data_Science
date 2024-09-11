@@ -94,7 +94,7 @@ def track_all_quant(injury_record_path, injury_tracking_path, concussion_trackin
 
     end_time = time.time()
     execution_time = end_time - start_time
-    print(f"Concatenated all Injury and Concussion tracking data to {output_path}. Execution time: {execution_time} seconds.")
+    print(f"Concatenated all Injury and Concussion tracking data to {output_path} \n Execution time: {execution_time} seconds.")
 
 
 #############################################################################
@@ -130,8 +130,8 @@ def process_ngs_files(source_dir, output_dir):
     combined_df.write_parquet(output_path)
 
     end_time = time.time()
-    execution_time = end_time - start_time
-    print(f"Combined processed data saved to: {output_path}. Execution time: {execution_time} seconds.")
+    execution_time = (end_time - start_time)/60 
+    print(f"Combined processed data saved to: {output_path} \n Execution time: {execution_time} minutes.")
     return combined_df
 
 
@@ -265,8 +265,8 @@ def transform_and_save_injury_data(injury_tracking_path, injury_output_dir, main
     process_file(optimized_df, injury_output_dir, group_size=15000)
     tracking_injuries(injury_output_dir, main_dir)
     end_time = time.time()
-    execution_time = end_time - start_time
-    print(f"Execution time: {execution_time} seconds.")
+    execution_time = (end_time - start_time)/60
+    print(f"Execution time: {execution_time} minutes.")
     
 
 
@@ -630,8 +630,8 @@ def angle_corrector(df):
 
     try: 
         df = df.with_columns([
-            ((pl.col("dir") + 90) % 360 - 180).alias("dir")
-            , ((pl.col("o") + 90) % 360 - 180).alias("o")
+            ((pl.col("dir") + 90) % 360 - 180).alias("dir").abs()
+            , ((pl.col("o") + 90) % 360 - 180).alias("o").abs()
         ]).with_columns(
             (calculate_angle_difference(pl.col("dir"), pl.col("o"))).abs().round(2).alias("Angle_Diff")
             )

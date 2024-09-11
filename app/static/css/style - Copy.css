@@ -1,0 +1,300 @@
+body {
+    font-family:'calibri';
+    height: 100%;
+    margin: 0;
+}
+
+h1, h2, h3, h4, span { 
+    font-family: 'calibri';
+    text-decoration: none;
+}
+
+p {
+    font-family: 'calibri';
+    text-decoration: none;
+    margin-left: 20px;
+    margin-right: 20px;
+    text-align: justify;
+}
+
+.blue-row {
+    background-color: #013369;
+    padding: 20px;
+    color: white
+}
+
+.modal-header {
+    background-color: #013369;
+    color: white;
+    text-shadow: 1px 1px 1px black;
+    text-align: left;
+    transition-duration: 0.4s;
+    cursor: pointer;
+}
+
+.h3-modal {
+    background-color: #013369;
+    color: white;
+    text-shadow: 1px 1px 1px black;
+}
+
+.table-header {
+    background-color: #013369;
+    color: white;
+    text-align: left;
+    text-shadow: 1px 1px 1px black;
+}
+
+.button {
+    border: none;
+    background-color: #013369;
+    color:white;
+    text-shadow: 1px 1px 1px black;
+    text-align: center;
+    display:inline-block;
+    transition-duration: 0.4s;
+    cursor: pointer;
+}
+
+.button:hover {
+    color: white;
+    background-color: #013369;
+    text-decoration: underline;
+    text-decoration-color: white;
+    
+}
+
+.button1:hover {
+    color: white;
+    background-color: #013369;
+    text-decoration: none;
+}
+
+.button1 {
+    border: none;
+    background-color: #013369;
+    color: white;
+    cursor: pointer;
+    padding-right: 8px;
+    text-decoration: none;
+}
+
+.button2 {
+    border: none;   
+    background-color: white;
+    color: #013369;
+    cursor: pointer;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-left: 14px;
+    padding-right: 14px;
+    border-radius: 8px;
+    text-decoration: none;
+}
+
+.icon {
+    border: none;
+    background-color: white;
+    color: #013369;
+    cursor: pointer;
+    padding-left: 4px;
+    padding-right: 8px;
+    text-decoration: none;
+}
+
+.toenail {
+    background-color: #013369;
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    /* text-decoration-color: white; */
+}
+
+.toenail:hover {
+    color: #013369;
+    background-color: white;
+    /* text-decoration-color: white; */
+    text-decoration: none;
+}
+
+.arrow {
+    color: #013369;
+}
+
+.arrow:hover {
+    color: #D50A0A;
+}
+
+a {
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: none;
+    color: black;
+}
+
+.contents {
+    color:#013369;
+}
+
+.contents:hover {
+    color: #D50A0A;
+}
+
+.to-top {
+    color: #013369;
+    background-color:transparent;
+}
+
+.to-top:hover {
+    color: #D50A0A;
+    background-color: transparent;
+}
+
+/* Adding new content below here */
+
+
+
+
+
+
+
+
+
+
+
+/* The grid: Four equal columns that floats next to each other */
+.column {
+    float: center;
+    width: 9%;
+    margin-left: 32px;
+}
+
+/* Style the images inside the grid */
+.column img {
+    opacity: 0.7;
+    cursor: pointer;
+}
+
+.column img:hover {
+    opacity: 1;
+}
+
+/* Clear floats after the columns */
+.row:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+
+/* The expanding image container (positioning is needed to position the close button and the text) */
+.container {
+    position: relative;
+    display: none;
+}
+
+/* Expanding image text */
+#imgtext {
+    position: absolute;
+    bottom: 15px;
+    left: 15px;
+    color: white;
+    font-size: 20px;
+}
+
+/* Closable button inside the image */
+.closebtn {
+    position: absolute;
+    top: 10px;
+    right: 500px;
+    color: #013369;
+    font-size: 35px;
+    cursor: pointer;
+}
+
+
+
+
+
+/* Slideshow container */
+/* .slideshow-container {
+    position: relative;
+    background: #f1f1f1f1;
+} */
+
+/* Slides */
+/* .Ticker {
+    display: none;
+    padding: 20px;
+    text-align: center;
+} */
+
+/* Next & previous buttons */
+/* .prev,
+.next {
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    width: auto;
+    margin-top: -10px;
+    padding: 16px;
+    color: #888;
+    font-weight: bold;
+    font-size: 20px;
+    border-radius: 0 3px 3px 0;
+    user-select: none;
+} */
+
+/* Position the "next button" to the right */
+/* .next {
+    position: absolute;
+    right: 0;
+    border-radius: 3px 0 0 3px;
+} */
+
+/* On hover, add a black background color with a little bit see-through */
+/* .prev:hover,
+.next:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+} */
+
+/* The dot/bullet/indicator container */
+/* .dot-container {
+    text-align: center;
+    padding: 10px;
+} */
+
+/* The dots/bullets/indicators */
+/* .dot {
+    cursor: pointer;
+    height: 15px;
+    width: 15px;
+    margin: 0 2px;
+    background-color: #bbb;
+    border-radius: 50%;
+    display: inline-block;
+    transition: background-color 0.6s ease;
+} */
+
+/* Add a background color to the active dot/circle */
+/* .active,
+.dot:hover {
+    background-color: #717171;
+} */
+
+/* Add an italic font style to all quotes */
+/* q {
+    font-style: italic;
+} */
+
+/* Add a blue color to the author */
+/* .author {
+    color: cornflowerblue;
+} */
+
+/* 
+< !-- Official NFL Colors -->
+< !-- Dark Midnight Blue (#013369) and Rosso Corsa (#D50A0A) --> */

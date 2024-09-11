@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>NFL Injury Analysis</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type='text/css' href="{{url_for('static', filename='css/style.css')}}">
+</head>
+
+<body>
+
+    <!-- Stats Ticker -->
+    <!-- The grid: four columns -->
+    <div class="row">
+        <div class="column">
+            <img src="../static/images/Post_Injuries_Days_Played.png" width="100%" alt="Days Played"
+                onclick="myFunction(this);">
+        </div>
+        <div class="column">
+            <img src="../static/images/Post_Injuries_Duration.png" alt="Duration" width="100%" onclick="myFunction(this);">
+        </div>
+        <div class="column">
+            <img src="../static/images/Post_Injuries_Duration_Field_Type.png" alt="Duration Field Type" width="100%"
+                onclick="myFunction(this);">
+        </div>
+        <div class="column">
+            <img src="../static/images/Post_Injuries_Field_Type.png" alt="Field Type" width="100%" onclick="myFunction(this);">
+        </div>
+        <div class="column">
+            <img src="../static/images/Post_Injuries_Total.png" alt="Total" width="100%" onclick="myFunction(this);">
+        </div>
+        <div class="column">
+            <img src="../static/images/Post_Injuries_Position.png" alt="Position" width="100%" onclick="myFunction(this);">
+        </div>
+        <div class="column">
+            <img src="../static/images/Post_Injury_Duration_Position.png" alt="Position Duration" width="100%"
+                onclick="myFunction(this);">
+        </div>
+        <div class="column">
+            <img src="../static/images/Post_Concussion_Field_Type.png" alt="Concussion Field Type" width="100%"
+                onclick="myFunction(this);">
+        </div>
+        <div class="column">
+            <img src="../static/images/Post_Concussion_Position.png" alt="Concussion Position" width="100%"
+                onclick="myFunction(this);">
+        </div>
+    </div>
+
+    <!-- The expanding image container -->
+    <div class="container">
+        <!-- Close the image -->
+        <span onclick="this.parentElement.style.display='none'" class="closebtn">&times;</span>
+
+        <!-- Expanded image -->
+        <img id="expandedImg" style="width:50%">
+
+        <!-- Image text -->
+        <div id="imgtext"></div>
+    </div>
+
+   
+    <!-- Top Bar -->
+    <div class="w3-container">
+        <div class="w3-row w3-large blue-row">
+            <div class="w3-col s1">
+                <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" style="height:32px;">
+            </div>
+            <div class="w3-col s2">
+                <a href="{{url_for('index')}}" class="button w3-block" style="font-weight:900;">The Main Page</a>
+            </div>
+            <div class="w3-col s3">
+                <a href="{{url_for('replays')}}" class="button w3-block " style="font-weight:900;" target="_blank">The Replays</a>
+            </div>
+            <div class="w3-col s3">
+                <a href="{{url_for('stats')}}" class="button w3-block " style="font-weight:900;" target="_blank">The Stats</a>
+            </div>
+            <div class="w3-col s3">
+                <a href="{{url_for('algorithm')}}" class="button w3-block" style="font-weight:900;">The Algorithm</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Everything else -->
+    <div class="w3-row w3-container">
+        <div class="w3-center w3-padding-16">
+            <span id="nfl-injury-analysis" class="w3-xxlarge w3-bottombar w3-border-dark-grey w3-padding-16">INSERT TEXT</span>
+            <h3 class="w3-xlarge" style="margin-top:30px;"><b><em>INSERT TEXT</b></em></h3>
+        </div>
+    </div>
+
+    <!-- Containers -->
+    <div class="w3-row-padding w3-container">
+        <div class="w3-col s6">
+            <div class="w3-card-4">
+                <h1 id="topic-and-reason" class="toenail w3-padding-16">INSERT TEXT</h1>
+                <h3 class="w3-margin-left w3-margin-right">INSERT TEXT</h3>
+                <p> INSERT TEXT</p>
+                <br><br>
+                <h3 class="w3-margin-left w3-margin-right">INSERT TEXT</h3>
+                <ul>
+                    <li>INSERT TEXT</li>
+                    <li>INSERT TEXT</li>
+                </ul>
+            </div>
+        </div>
+        <div class="w3-col s6">
+            <div class="w3-card-4">
+                <h1 id="topic-and-reason" class="toenail w3-padding-16">INSERT TEXT</h1>
+                <h3 class="w3-margin-left w3-margin-right">INSERT TEXT</h3>
+                <p> INSERT TEXT</p>
+                <br><br>
+                <h3 class="w3-margin-left w3-margin-right">INSERT TEXT</h3>
+                <ul>
+                    <li>INSERT TEXT</li>
+                    <li>INSERT TEXT</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <h1 id="database-structure-and-utilization" class="toenail w3-padding-16" style="text-align:center">BANNER
+            <a href="#" class="to-top w3-right"><i class="fa fa-arrow-up w3-margin-right"></i></a></h1>
+
+
+    <div class="w3-row-padding w3-container">
+        <div class="w3-col s6">
+            <div class="w3-card-4">
+                <h2 id="topic-and-reason" class="toenail w3-padding-16">INSERT TEXT</h2>
+                <h3 class="w3-margin-left w3-margin-right">INSERT TEXT</h3>
+                <p> INSERT TEXT</p>
+                <center>
+                    <img src="../static/images/Prelim_RF.png" alt="Confusion Matrix" style="width:60%">
+                </center>
+            
+                <br><br>
+            </div>
+        </div>
+        <div class="w3-col s6">
+            <div class="w3-card-4">
+                <h2 id="topic-and-reason" class="toenail w3-padding-16">INSERT TEXT</h2>
+                <h3 class="w3-margin-left w3-margin-right">INSERT TEXT</h3>
+                <p>INSERT TEXT</p>
+                <center>
+                    <img src="../static/images/Naive_Bayes_Confusion.png" alt="Confusion Matrix" style="width:60%">
+                </center>
+                <br><br>
+            </div>
+        </div>
+    </div>
+
+        <h2 id="topic-and-reason" class="toenail w3-padding-16">BANNER
+            Models<a href="#" class="to-top w3-right"><i class="fa fa-arrow-up w3-margin-right"></i></a>
+        </h2>
+
+        <div class="w3-row-padding w3-container">
+            <div class="w3-col s6">
+                <div class="w3-card-4">
+                    <h3 class="w3-margin-left w3-margin-right">INSERT TEXT</h3>
+                    <p>INSERT TEXT</p>
+
+                    
+                    <center>
+                        <img src="../static/images/RF_IsInjured.png" alt="Confusion Matrix" style="width:60%">
+                    </center><br>
+                    <p>INSERT TEXT</p>
+                    <br>
+
+                    <h3 class="w3-margin-left w3-margin-right">INSERT TEXT</h3>
+                    <center>
+                        <img src="../static/images/RF_IsSevere.png" alt="Confusion Matrix" style="width:60%">
+                    </center><br>
+                    <p>
+                        INSERT TEXT
+                    </p><br>
+               
+                    <h3>INSERT TEXT</h3>
+                    <center>
+                        <img src="../static/images/RF_InjuryType.png" alt="Confusion Matrix" style="width:60%">
+                    </center><br>
+                    <p>INSERT TEXT </p><br><br>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <h1 id="topic-and-reason" class="toenail w3-padding-16">BANNER
+        <a href="#" class="to-top w3-right"><i class="fa fa-arrow-up w3-margin-right"></i></a>
+    </h1>
+
+    <div class="w3-row-padding w3-container">
+        <div class="w3-col s6">
+            <div class="w3-card-4">
+                <h3 id="topic-and-reason" class="toenail w3-padding-16">INSERT TEXT</h3>
+                <p>INSERT TEXT</p>
+                <center>
+                    <img src="../static/images/Dendogram_Concussion_Data.png" alt="Confusion Matrix" style="width:90%">
+                </center><br>
+            </div>
+        </div>
+        <div class="w3-col s6">
+            <div class="w3-card-4">
+                <h3 id="topic-and-reason" class="toenail w3-padding-16">INSERT TEXT</h3>
+                <p>INSERT TEXT</p>
+                <center>
+                    <img src="../static/images/Elbow_Curve1.png" alt="Confusion Matrix" style="width:60%">
+                </center><br>
+                <center>
+                    <img src="../static/images/K-Means.png" alt="Confusion Matrix" style="width:70%">
+                </center><br>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Toenails -->
+    <div class="w3-row-padding col-container">
+        <div class="w3-col s2">
+            <a href="{{url_for('replays')}}" target="_blank">
+                <div class="w3-card-4">
+                    <header>
+                        <h3 class="toenail">The Replays</h3>
+                        <p class="w3-center">Explore the Field by Position and Type of Injury</p>
+                    </header>
+                    <img src="../static/images/FieldInjuryPlaysTab.png" alt="Tableau Field" style="width:100%">
+                </div>
+            </a>
+        </div>
+    
+        <div class="w3-col s2">
+            <a href="{{url_for('stats')}}" target="_blank">
+                <div class="w3-card-4">
+                    <header>
+                        <h3 class="toenail">The Stats</h3>
+                        <p class="w3-center">Interact with Injury and Concussion Analyses</p>
+                    </header>
+                    <img src="../static/images/Replays.png" alt="Bar Chart" style="width:100%">
+                </div>
+            </a>
+        </div>
+    
+        <div class="w3-col s2">
+            <a href="{{url_for('algorithm')}}">
+                <div class="w3-card-4">
+                    <header>
+                        <h3 class="toenail">The Algorithm</h3>
+                        <p class="w3-center">Examine the Machine Learning Models</p>
+                    </header>
+                    <img src="../static/images/K-Means.png" alt="ML Analysis" style="width:100%">
+                </div>
+            </a>
+        </div>
+    
+    
+        <div class="w3-col s2">
+            <a href="{{url_for('design')}}">
+                <div class="w3-card-4">
+                    <header>
+                        <h3 class="toenail">The Design</h3>
+                        <p class="w3-center">Investigate the Data Sources and Organization</p>
+                    </header>
+                    <img src="../static/images/PuntAnalytics_DB.png" alt="Database Image" style="width:100%">
+                </div>
+            </a>
+        </div>
+    
+        <div class="w3-col s2">
+            <a href="{{url_for('delivery')}}" target="_blank">
+                <div class="w3-card-4">
+                    <header>
+                        <h3 class="toenail">The Delivery</h3>
+                        <p class="w3-center">Walk through the Stakeholder Presentation</p>
+                    </header>
+                    <img src="../static/images/PresentationSlide1.png" alt="ML 3d Image" style="width:100%">
+                </div>
+            </a>
+        </div>
+    
+        <div class="w3-col s2">
+            <a href="{{url_for('report')}}">
+                <div class="w3-card-4">
+                    <header>
+                        <h3 class="toenail">The Report</h3>
+                        <p class="w3-center">Review the Complete Project Analysis</p>
+                    </header>
+                    <img src="../static/images/database3.jpg" alt="Mathematical Slide" style="width:100%">
+                </div>
+            </a>
+        </div>
+    </div>
+    
+    
+<!-- Footer -->
+<footer class="w3-container blue-row">
+    <NOBR>
+        <p class="w3-large w3-col s4">Find the source code on
+            <a href="https://github.com/FreshOats" class="button2" target="_blank"><span class="w3-xlarge">
+                    <i class="fa fa-github icon layered"></i></span>GitHub</a>
+        </p>
+    </NOBR>
+    <a href="#" class="button w3-right"><i class="fa fa-arrow-up w3-margin-right"></i>Top</a>
+</footer>
+
+</body>    
+
+
+
+<!-- Script for Sidebar, Tabs, Accordions, Progress bars and slideshows -->
+<script>
+
+
+</script>
+
+
+</html>

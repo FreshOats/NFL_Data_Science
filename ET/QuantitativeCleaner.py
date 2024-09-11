@@ -350,8 +350,8 @@ def angle_corrector(df):
 
     try: 
         df = df.with_columns([
-            ((pl.col("dir") + 90) % 360 - 180).alias("dir")
-            , ((pl.col("o") + 90) % 360 - 180).alias("o")
+            ((pl.col("dir") + 90) % 360 - 180).alias("dir").abs()
+            , ((pl.col("o") + 90) % 360 - 180).alias("o").abs()
         ]).with_columns(
             (calculate_angle_difference(pl.col("dir"), pl.col("o"))).abs().round(2).alias("Angle_Diff")
             )
