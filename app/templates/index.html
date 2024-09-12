@@ -5,18 +5,73 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Concussion Biomechanical Analytics{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" type='text/css' href="{{url_for('static', filename='css/style.css')}}">
 </head>
 
 <body>
-
     <!-- Stats Ticker -->
     <div class="banner-container">
-            <!-- Images will be dynamically added here via JavaScript -->
+        <!-- Images will be dynamically added here via JavaScript -->
+    </div>
+
+    <!-- Modal container -->
+    <div id="imageModal" class="modal">
+        <span class="close">&times;</span>
+        <img class="modal-content" id="modalImage">
+        <div id="caption"></div>
+    </div>
+
+    <!-- Divider Banner -->
+    <div class="divider-banner"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="nfl-logo">
+            <ul>
+                <li><a href="#">Home</a></li>
+                <li><a href="#">Biomechanics</a></li>
+                <li><a href="#">Stats</a></li>
+                <li><a href="#">Visualizations</a></li>
+            </ul>
+        </div>
+    </nav>
+
+
+    <div class="content-container">
+        <!-- Blue Column next to slide show -->
+        <div class="blue-column"></div>
+
+        <!-- Slide Show -->
+        <div class="slideshow-container">
+            <div class="slide fade">
+                <img src="\static\images\fact.jpg" alt="Slide 1">
+                <div class="text">Caption Text 1</div>
+            </div>
+        
+            <div class="slide fade">
+                <img src="\static\images\fact.jpg" alt="Slide 2">
+                <div class="text">Caption Text 2</div>
+            </div>
+        
+            <div class="slide fade">
+                <img src="\static\images\fact.jpg" alt="Slide 3">
+                <div class="text">Caption Text 3</div>
+            </div>
+        
+            <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
+            <a class="next" onclick="plusSlides(1)">&#10095;</a>
+        </div>
     </div>
 
 
-<!-- <script src="/static/js/banner.js"></script> -->
-<script src="{{ url_for('static', filename='js/banner.js') }}"></script>
-</body>    
+
+    <!-- Your main content goes here -->
+
+    <script src="{{ url_for('static', filename='js/banner.js') }}"></script>
+</body>
+
 </html>
+
+
