@@ -47,21 +47,62 @@
         <div class="slideshow-container">
             <div class="slide fade">
                 <img src="\static\images\fact.jpg" alt="Slide 1">
-                <div class="text">Caption Text 1</div>
+                <div class="text">This project is an investigation of concussions and the biomechanics
+                    involved in plays that have led to concussions in the NFL.
+                </div>
             </div>
         
             <div class="slide fade">
                 <img src="\static\images\fact.jpg" alt="Slide 2">
-                <div class="text">Caption Text 2</div>
+                <div class="text">The purpose is to investigate high risk conditions that predictors for concussion injuries
+                    to help identify players who may have suffered even a subconcussive injury. 
+                </div>
             </div>
         
             <div class="slide fade">
                 <img src="\static\images\fact.jpg" alt="Slide 3">
-                <div class="text">Caption Text 3</div>
+                <div class="text">The identification of high risk plays can be applied not only to football, but any sport
+                    that allows for tracking the players movement in time, helping coaches and the players themselves seek 
+                    medical attention when there aren't obvious signs of a concussion.
+                </div>
+            </div>
+
+            <div class="slide fade">
+                <img src="\static\images\fact.jpg" alt="Slide 2">
+                <div class="text">Prevening these high risk situations can be done by manipulating the movement of players
+                    to reduce the torque and impulse subjected to the players' heads in high-impact plays. 
+                </div>
+            </div>
+
+            <div class="slide fade">
+                <img src="\static\images\fact.jpg" alt="Slide 2">
+                <div class="text">An additional outcome of this study can help identify higher risk players in the NFL, as 
+                    players that sustain an injury one week that continue to play, are more likely to get seriously injured 
+                    shortly after, without ample recovery time.
+                </div>
             </div>
         
             <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
             <a class="next" onclick="plusSlides(1)">&#10095;</a>
+        </div>
+
+
+        <!-- Injury Scraper -->
+        <div class="injury-table-container">
+            <h3>15 Most Recent Injuries</h3>
+            <table id="injury-table">
+                <thead>
+                    <tr>
+                        <th>Team</th>
+                        <th>Player</th>
+                        <th>Position</th>
+                        <th>Injury</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Table rows will be populated by JavaScript -->
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -70,6 +111,7 @@
     <!-- Your main content goes here -->
 
     <script src="{{ url_for('static', filename='js/banner.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/indexPage.js') }}"></script>
 </body>
 
 </html>
