@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="biomechanics-container">
+    <div class="biomechanics-content">
+        <h1 id="intro" class="centered-header">Intro to Biomechanics</h1>
+
+        <div class="section-content left-image">
+            <img src="{{ url_for('static', filename='images/biomech.jpeg') }}" alt="Introduction to Biomechanics">
+            <div class="text-content">
+                <p>Your introduction text here...</p>
+            </div>
+        </div>
+
+        <h1 class="centered-header">Brain Injuries</h1>
+
+        <div class="section-content right-image">
+            <div class="text-content">
+                <p>Text about brain injuries...</p>
+            </div>
+            <img src="{{ url_for('static', filename='images/brain_anatomy.jpg') }}" alt="Forces in Football">
+        </div>
+
+        <h1 class="centered-header">Mechanics of Concussions</h1>
+
+        <div class="image-row">
+            <img src="{{ url_for('static', filename='images/Brain.jpg') }}" alt="Head Impacts">
+            <img src="{{ url_for('static', filename='images/transverse-concussion.gif') }}" alt="Concussion Mechanics">
+            <img src="{{ url_for('static', filename='images/rotation-concussion.gif') }}" alt="Prevention Strategies">
+        </div>
+        <div class="text-content">
+            <p>Text about mechanics of concussions...</p>
+        </div>
+
+        <h1 class="centered-header">Prevention Strategies</h1>
+
+        <div class="text-content">
+            <p>Text about prevention strategies...</p>
+        </div>
+    </div>    
+</div>
+
+{% endblock %}

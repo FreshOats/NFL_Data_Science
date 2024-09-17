@@ -12,7 +12,7 @@
 <body>
     <!-- Stats Ticker -->
     <div class="banner-container">
-        <!-- Images will be dynamically added here via JavaScript -->
+        <!-- Images will be dynamically via JavaScript -->
     </div>
 
     <!-- Modal container -->
@@ -28,12 +28,13 @@
     <!-- Navigation Bar -->
     <nav class="navbar">
         <div class="nav-container">
-            <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg" alt="NFL Logo" class="nfl-logo">
+            <img src="https://static.www.nfl.com/image/upload/v1554321393/league/nvfr7ogywskqrfaiu38m.svg"
+                alt="NFL Logo" class="nfl-logo">
             <ul>
-                <li><a href="#">Home</a></li>
-                <li><a href="#">Biomechanics</a></li>
-                <li><a href="#">Stats</a></li>
-                <li><a href="#">Visualizations</a></li>
+                <li><a href="{{ url_for('index') }}">Home</a></li>
+                <li><a href="{{ url_for('biomechanics') }}">Biomechanics</a></li>
+                <li><a href="{{ url_for('stats') }}">Stats</a></li>
+                <li><a href="{{ url_for('visualizations') }}">Visualizations</a></li>
             </ul>
         </div>
     </nav>
@@ -48,37 +49,43 @@
                     involved in plays that have led to concussions in the NFL.
                 </div>
             </div>
-        
+
             <div class="slide fade">
                 <img src="\static\images\fact.jpg" alt="Slide 2">
-                <div class="text">The purpose is to investigate high risk conditions that predictors for concussion injuries
-                    to help identify players who may have suffered even a subconcussive injury. 
+                <div class="text">The purpose is to investigate high risk conditions that predictors for concussion
+                    injuries
+                    to help identify players who may have suffered even a subconcussive injury.
                 </div>
             </div>
-        
+
             <div class="slide fade">
                 <img src="\static\images\fact.jpg" alt="Slide 3">
-                <div class="text">The identification of high risk plays can be applied not only to football, but any sport
-                    that allows for tracking the players movement in time, helping coaches and the players themselves seek 
+                <div class="text">The identification of high risk plays can be applied not only to football, but any
+                    sport
+                    that allows for tracking the players movement in time, helping coaches and the players themselves
+                    seek
                     medical attention when there aren't obvious signs of a concussion.
                 </div>
             </div>
 
             <div class="slide fade">
                 <img src="\static\images\fact.jpg" alt="Slide 2">
-                <div class="text">Prevening these high risk situations can be done by manipulating the movement of players
-                    to reduce the torque and impulse subjected to the players' heads in high-impact plays. 
+                <div class="text">Prevening these high risk situations can be done by manipulating the movement of
+                    players
+                    to reduce the torque and impulse subjected to the players' heads in high-impact plays.
                 </div>
             </div>
 
             <div class="slide fade">
                 <img src="\static\images\fact.jpg" alt="Slide 2">
-                <div class="text">An additional outcome of this study can help identify higher risk players in the NFL, as 
-                    players that sustain an injury one week that continue to play, are more likely to get seriously injured 
+                <div class="text">An additional outcome of this study can help identify higher risk players in the NFL,
+                    as
+                    players that sustain an injury one week that continue to play, are more likely to get seriously
+                    injured
                     shortly after, without ample recovery time.
                 </div>
             </div>
-        
+
             <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
             <a class="next" onclick="plusSlides(1)">&#10095;</a>
         </div>
@@ -113,5 +120,3 @@
 </body>
 
 </html>
-
-
