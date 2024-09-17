@@ -40,9 +40,6 @@
 
 
     <div class="content-container">
-        <!-- Blue Column next to slide show -->
-        <div class="blue-column"></div>
-
         <!-- Slide Show -->
         <div class="slideshow-container">
             <div class="slide fade">
@@ -89,10 +86,10 @@
 
         <!-- Injury Scraper -->
         <div class="injury-table-container">
-            <h3>15 Most Recent Injuries</h3>
             <table id="injury-table">
                 <thead>
                     <tr>
+                        <th></th>
                         <th>Team</th>
                         <th>Player</th>
                         <th>Position</th>
@@ -100,14 +97,15 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Table rows will be populated by JavaScript -->
+                    <!-- This will be populated by JavaScript -->
                 </tbody>
             </table>
         </div>
+
+
+
+
     </div>
-
-
-
     <!-- Your main content goes here -->
 
     <script src="{{ url_for('static', filename='js/banner.js') }}"></script>

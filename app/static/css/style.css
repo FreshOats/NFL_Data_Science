@@ -31,15 +31,25 @@
     caret-color: transparent;
 }
 
+.banner {
+    width: 100%;
+}
+
 body {
     font-family: 'Lato', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
 .navbar {
     background-color: #013369;
-    /* NFL Blue color */
     height: 100px;
     padding: 0;
+    width: 100%;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 }
 
 .nav-container {
@@ -84,10 +94,7 @@ body {
 
 .navbar a:hover {
     color: #D50A0A;
-    /* NFL red color for hover effect */
 }
-
-
 
 /* Modal styles */
 .modal {
@@ -101,7 +108,6 @@ body {
     height: 100%;
     overflow: auto;
     background-color: rgba(255, 255, 255, 0.95);
-    /* White background with slight transparency */
 }
 
 .modal-content {
@@ -116,7 +122,6 @@ body {
     top: 15px;
     right: 35px;
     color: #333;
-    /* Dark color for better visibility on white background */
     font-size: 40px;
     font-weight: bold;
     transition: 0.3s;
@@ -128,31 +133,26 @@ body {
     text-decoration: none;
 }
 
-
 /* Slide Show */
 .content-container {
-    position: relative;
+    display: flex;
     width: 100%;
-    overflow: hidden;
-    /* To contain the floated elements */
+    position: relative;
+    overflow: visible;
 }
 
-.blue-column {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100px;
-    height: 100%;
-    background-color: #013369;
-    /* NFL blue color */
+.content-wrapper {
+    display: flex;
+    align-items: flex-start;
 }
+
 
 .slideshow-container {
     width: 60%;
+    min-width: 900px;
+    max-width: 2400px;
     position: relative;
-    margin-left: 100px;
-    float: left;
-    background-color: white;
+    overflow: hidden;
 }
 
 .slideshow-container .slide {
@@ -172,17 +172,28 @@ body {
     transform: translate(-50%, -50%);
     color: white;
     font-size: 50px;
-    /* Adjust this value for your preferred text size */
     font-weight: bold;
     text-align: center;
     text-shadow: 2px 2px 0 rgb(40, 57, 94);
     width: 70%;
-    /* Adjust as needed */
     padding: 20px;
-    /* background-color: rgba(0, 0, 0, 0.5); */
-    /* Optional: adds a semi-transparent background */
 }
 
+
+@media (max-width: 768px) {
+    .content-wrapper {
+        flex-direction: column;
+    }
+
+    .slideshow-container,
+    .injury-table-container {
+        width: 100%;
+    }
+
+    .slideshow-container {
+        min-width: unset;
+    }
+}
 
 .prev,
 .next {
@@ -218,7 +229,7 @@ body {
 
 @keyframes fade {
     from {
-        opacity: .4
+        opacity: 1
     }
 
     to {
@@ -226,21 +237,19 @@ body {
     }
 }
 
-/* Scraper */
-
-.content-wrapper {
-    display: flex;
-    width: 100%;
-}
-
-.slideshow-container {
-    width: 60%;
-    margin-left: 100px;
-}
-
+/* Injury Table Styles */
 .injury-table-container {
     width: 40%;
     padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+.injury-table-header {
+    font-size: 36px;
+    margin-bottom: 15px;
+    color: #013369;
+    text-shadow: 1px 1px 0 rgb(40, 57, 94);
 }
 
 #injury-table {
@@ -258,4 +267,26 @@ body {
 #injury-table th {
     background-color: #013369;
     color: white;
+    font-size: 30px;
+}
+
+#injury-table td {
+    font-size: 26px;
+    padding: 8px;
+    border: 1px solid #ddd;
+}
+
+#injury-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+#injury-table tr:hover {
+    background-color: #ddd;
+}
+
+/* New styles for team logo images */
+#injury-table img {
+    max-width: 30px;
+    height: auto;
+    vertical-align: middle;
 }
