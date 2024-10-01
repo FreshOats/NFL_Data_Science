@@ -1,6 +1,79 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Visualizations</h1>
-<p>Content for the Visualizations page will go here.</p>
+<div class="visualization-container">
+    <div class="visualization-content">
+        <div class="tableau-wrapper">
+            <div class='tableauPlaceholder' id='viz1727818186307' style='position: relative'><noscript><a href='#'><img
+                            alt='Plays Resulting in Concussions '
+                            src='https:&#47;&#47;public.tableau.com&#47;static&#47;images&#47;Co&#47;Concussions_17267842097920&#47;Concussions&#47;1_rss.png'
+                            style='border: none' /></a></noscript><object class='tableauViz' style='display:none;'>
+                    <param name='host_url' value='https%3A%2F%2Fpublic.tableau.com%2F' />
+                    <param name='embed_code_version' value='3' />
+                    <param name='site_root' value='' />
+                    <param name='name' value='Concussions_17267842097920&#47;Concussions' />
+                    <param name='tabs' value='no' />
+                    <param name='toolbar' value='yes' />
+                    <param name='static_image'
+                        value='https:&#47;&#47;public.tableau.com&#47;static&#47;images&#47;Co&#47;Concussions_17267842097920&#47;Concussions&#47;1.png' />
+                    <param name='animate_transition' value='yes' />
+                    <param name='display_static_image' value='yes' />
+                    <param name='display_spinner' value='yes' />
+                    <param name='display_overlay' value='yes' />
+                    <param name='display_count' value='yes' />
+                    <param name='language' value='en-US' />
+                </object>
+            </div>
+
+        </div>
+        <div class="instructions">
+            <h1>How to Use This Visualization</h1>
+            <ul>
+                <li>Click on the arrows to switch tabs for different analyses</li>
+                <li>Reset the Play Time and press the forward animation button below to see the plays over time</li>
+                <li>Select a different Injury Key to see different plays</li>
+                <li>At the bottom of this page, there is a link to Tableau Public for a more user-friendly Viz</li><br><br><br>
+            </ul>
+
+            <h1>What You Are Observing</h1>
+            <ul>
+                <li>Each Play Key is a different play that resulted in a concussion.</li>
+                <li>The first panel examines the linear impulse and torque of the injured player, and the opposing team's player who was involved in the collision 
+                    leading to the concussion. The path is from the start of play to the time of injury. 
+                </li>
+                <li>The second panel examines linear impulse and body torque or internal torque. 
+                    Body torque is the twisting of the player as they turn on the field. 
+                    Internal torque looks at the differece in the player's orientation and direction of movement as the player twists their body.</li>
+                <li>The third panel examines the torques with linear impulse, but includes directionality, 
+                    allowing you to see as they turn from left to right or vice versa.</li>
+            </ul>
+        </div>
+    </div>
+    <div class="divider"></div>
+    <div class="original-link">
+        <a href="https://public.tableau.com/views/Concussions_17267842097920/Concussions" target="_blank">Open Tableau Visualization (it's bigger!)</a>
+    </div>
+</div>
+
+<script type='text/javascript'>
+    var divElement = document.getElementById('viz1727818186307');
+    var vizElement = divElement.getElementsByTagName('object')[0];
+
+    function resizeViz() {
+        var containerWidth = document.querySelector('.tableau-wrapper').offsetWidth;
+        vizElement.style.width = '100%';
+        vizElement.style.height = (containerWidth * 0.5) + 'px';
+    }
+
+    var scriptElement = document.createElement('script');
+    scriptElement.src = 'https://public.tableau.com/javascripts/api/viz_v1.js';
+    scriptElement.onload = function () {
+        resizeViz();
+        window.addEventListener('resize', resizeViz);
+    };
+    vizElement.parentNode.insertBefore(scriptElement, vizElement);
+</script>
 {% endblock %}
+
+
+

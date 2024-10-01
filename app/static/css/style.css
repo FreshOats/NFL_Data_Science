@@ -372,3 +372,77 @@ h1:hover {
     object-fit: contain;
     /* max-height: 400px; */
 }
+
+
+.visualizations-container {
+    padding: 20px;
+    max-width: 2200px;
+    margin: 0 auto;
+}
+
+.visualization-content {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.tableau-wrapper {
+    width: 65%;
+    margin-right: 20px;
+}
+
+.instructions {
+    width: 30%;
+    padding: 20px;
+    background-color: #f8f8f8;
+    border-radius: 5px;
+}
+
+.instructions h1 {
+    color: var(--nfl-blue);
+    margin-bottom: 15px;
+    font-size: 36px;
+}
+
+.instructions ul {
+    padding-left: 20px;
+}
+
+.instructions li {
+    margin-bottom: 10px;
+    font-size: 24px;
+}
+
+.divider {
+    height: 2px;
+    background-color: var(--nfl-blue);
+    margin: 20px 0;
+}
+
+.original-link {
+    text-align: center;
+}
+
+.original-link a {
+    color: var(--nfl-blue);
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 30px;
+    transition: color 0.3s ease;
+}
+
+.original-link a:hover {
+    color: var(--nfl-red);
+}
+
+@media (max-width: 1024px) {
+    .visualization-content {
+        flex-direction: column;
+    }
+
+    .tableau-wrapper,
+    .instructions {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+}
