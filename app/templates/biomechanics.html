@@ -8,7 +8,75 @@
         <div class="section-content left-image">
             <img src="{{ url_for('static', filename='images/biomech.jpeg') }}" alt="Introduction to Biomechanics">
             <div class="text-content">
-                <p>Your introduction text here...</p>
+                <h2>What is biomechanics?</h2>
+                <p>In short, biomechanics is the study of the structure, function, and motion of the mechanical aspects of biological systems at any level. 
+                    The biomechanics in this application are specifically related to the gross anatomy of the human body, and the mechanics associated with 
+                    the movements of the body both internally and externally. 
+                    <br><br>
+                    The focus of this study on concussions relies heavily on a few concepts from kinematics and dynamics from physics or engineering
+                    and how these concepts are related to the 'why' and 'how' concussions occur.  
+                </p>
+                <h2>Newton's First Law</h2>
+                <p>One of the fundamental phsyics concepts that we learn is about interia, and this is the crux of this particular type of injury. It states:<br><br>
+                <span class="emphasis">Every object will remain at rest or in uniform motion unless acted upon by an external force.</span><br><br>
+                The tendency to resist the change in state of motion is inertia. As this is an analysis of football players getting injured, most of the 
+                changes in motion will be the change from a player or external body part in one direction of motion that is being changed or stopped by an external force. 
+                Additionally, the movement of the brain internally will also be considered as separate from the skull, which is considered the external force to that of the brain.</p>
+                <h2>Newton's Second Law and Impulse</h2>
+                <p>This law is one that most people misconceive as simply <b>F = MA</b>, which is incorrect on a few levels. The original law states that the rate of change of momentum 
+                    is directly proportional to the force applied.>
+                    <div class="formula">
+                        <p>\(F \propto \frac{\Delta p}{\Delta t}\)</p>
+                    </div>
+                With respect to the injuries, Force is important, but the impulse is more important. Impulse is defined as the change in momentum (mass x velocity), but through a wee bit of algebra, we can see that the 
+                change in momentum is equivalent to the overall effect of force acting over time. Impulse is given the symbol <b>J</b>, because it is super-intuitive.
+                    <div class="formula">
+                        <p>\(F(\Delta t) = \Delta p \equiv J\)</p>
+                    </div>
+                These are all things considered moving in a linear fashion, which, unfortunately, is not always the case, and rarely what results in such injuries... since our heads are 
+                kinda wobbly and rotate all over the place when we're jostled around like a ragdoll. And who doesn't like to think of big burly football players as ragdolls?</p> 
+                
+                <h2>Newton's Third Law</h2>
+                <p>The final law is colloquially known as 'for every action, there is an equal and opposite reaction,'' but more formally, it is as such:<br><br>
+                    <span class="emphasis">Whenever one object exerts a force on another, the second object exerts a force of equal magnitude but in the opposite direction of the first object.</span><br><br>
+                    The force of the football player onto the ground is the same as the force the ground applies to the football player. The force that the rotating head toward the ground applies 
+                    on the neck muscles is equal to the force the neck muscles are applying back onto the head. 
+                </p>
+            </div>
+        </div>
+
+        <div class="section-content left-image">
+            <img src="{{ url_for('static', filename='images/joints.jpg') }}" alt="Introduction to Biomechanics">
+            <div class="text-content">
+
+                <h2>Rotational Mechanics</h2>
+                <p>The most annoying part about rotation is that the distribution of mass and the point of rotation completely change how the body is affected. At this point, all of the 
+                    concepts from linear applications such as momentum and impulse can be translated to a rotational frame. While we can try to throw an axe linearly so that it doesn't rotate at all, 
+                    most people will find that it's extremely difficult to lodge that axe in the wood by applying linear force alone. <br><br>
+
+                    The beauty of rotational dynamics and linear dynamics is that they act independtly of one another, and due to this relationship, they have an additive impact when the rotational 
+                    mechanics are translated back into a linear system. In other words, the linear velocity of the axe you threw will go from that velocity to zero, upon impact of the wood you're trying to lodge 
+                    it into, but simultaneously, the wood is stopping the rotating axe, which is applied linearly into the wood, perpendicular to the rotation (which is into the wood). 
+                    To further clarify - a pellet shot from a pellet gun doesn't need to rotate, if the linear velocity is high enough, to lodge into the wood.<br><br>
+
+                    Alternatively, if we have an axe rotating on, say, a VERY strong record player and move the wood such that it impedes the rotation of 
+                    the axe, it will also lodge into the wood. The faster the pellet is shot, the greater the change in linear momentum (linear impulse). 
+                    The more rotations per minute the axe is spinning, the greater the change in angular momentum, <b>L</b>>. Most people are familiar with the concept of Force, which we defined above with 
+                    Newton's Second Law. However, there is one little hiccup that comes with rotating objects that doesn't allow us to use force in a rotating system...<br><br>
+
+                    Mass is not distributed equally, the phyics of rotation is dependent upon how the object is rotating with respect to the center of mass. A thrown axe rotates about the center of the axe, 
+                    not about the end of the handle. This behaves very differently than trying to spin an axe around the axe head or around the end of the handle. 
+                    Bringing this back to biomechanics, a body that is simply falling while the feet are on the ground has different physical properties than a body rotating about the
+                    waist. As I mentioned above, force doesn't translate into angular systems. When we include this mass distribution within a rotating system (called Moment of Inertia, I), we get Torque, often thought of as the rotating force.<br><br>
+                    <div class="formula">
+                        <p>\(\tau = \frac{\Delta L}{\Delta t}\)</p>
+                    </div>
+
+                    When we translate our rotating axe analogy to the human head, we will see both of these types of rotation. If the player's body stops moving, the player's head will follow Newton's First Law and attempt to continue moving. 
+                    Fortunately, the neck prevents the head from flying off, however, when the body stops, the head begins to rotate as would the axe around the tip of the handle, or like a tree, anchored by its roots as it falls. 
+                    Simultaneously within the skull, the brain itself is resisting movement, but this movement it is resisting is the rotation described above. The brain is more like a sphere that is rotating about its center, or in this case 
+                    resisting that rotation. If this is unclear, there are images below that correspond to how these forces are... problematic, even with the best helmets on the market. 
+                </p>
             </div>
         </div>
 
@@ -16,26 +84,157 @@
 
         <div class="section-content right-image">
             <div class="text-content">
-                <p>Text about brain injuries...</p>
+                <p>The focus of this project is an investigation of traumatic brain injuries, or TBI. A TBI occurs when an external force impacts the brain, leading to damage. The way this sounds is more like a 
+                    metal spike being thrust into someone's head, but we have to consider that ANYTHING external to the brain applying force upon it is external, and this includes the skull. TBIs can cause bruising, bleeding, 
+                    damaged tissues, and other types of physical damage that can lead to cellular damage or death. Repeated injuries can lead to chronic conditions including chronic traumatic encephalopathy (CTE), depression, 
+                    and early onset dementia. <br><br>
+                    The brain can heal; however, compared to the rest of our bodies, the capabilities of the brain to heal are limited. The potential for recovery is, as expected, related to the severity and type of injury. The 
+                    term Traumatic Brain Injury sounds severe, but a concussions is exactly that, only the term we use for a mild TBI. And even within diagnosing concussions, we consider some severe and some as minor. At this point, it's important 
+                    to consider the difference between minor brain injuries and minor non-brain injuries on the human body. <br><br> 
+                    Our bodies are designed to repair damage rapidly for survival. If we keep applying physical trauma to a region on our skin, over time we will develop scar tissue or calluses, making us 'stronger' as we heal. 
+                    This applies to our skin, muscles, and skeletal tissue alike. Our brain is not the same: healing of nerve tissue is incredibly slow compared to other tissue, and damage to the same region is less likely to heal
+                    and more likely to lose functionality. So repeated minor concussions sustained the same way won't lead to stronger tissue, it can result in permanent brain damage.<br><br>
+                    While millions of people are affected by TBIs each year, the incidence of them in athletes who play contact sports is particularly high. Now, I know this project specifically investigates those in the NFL, 
+                    people whom I have worked with and interviewed who had sustained concussions that severely impacted their ability to work, or in some cases attend school, were not involved in football. In fact, three women I worked with 
+                    had sustained either minor or major concussions in either high school or college sports, two of which are rarely considered high-risk for TBIs. <br>
+                    <ul>
+                        <li>Soccer: This athlete often used headers, but the coach never saw any tell-tale signs of concussion. But after months of headaches post-season, 
+                            she was diagnosed with a TBI attributed to a series of minor subconcussive injuries applied to same region of the brain, following an MRI.</li><br>
+                        <li>Volleyball: This athlete was highly competitive in beach volleyball. During one match, she and a player on the opposing team collided near the net, resulting in an elbow to the head.
+                            She continued to play but ended the match early as she was having trouble with balance. She was diagnosed with a minor concussion by EMTs at the site. She was unable to finish the season, 
+                            and had memory issues following, which resulted in a medical leave from the university for a semester. 
+                        </li><br>
+                        <li>
+                            Water Polo: This athlete was in practice as a senior in high school, who was being recruited for water polo. During a single practice, a ball hit her in the back of the head that sent her face down
+                            in the water. She got out of the pool and was checked for concussion by the nurse on staff and was cleared to return to the pool. Shortly thereafter, she was hit in the back of the head again, which 
+                            rendered her unconscious and she had to be removed from the pool by other players from the team. Her concussion was so severe that she couldn't attend school for 8 months because of sensitivity to light, 
+                            reduced concentration, memory issues, and chronic headaches.  
+                        </li>
+                    </ul>
+                    I am specifically bringing these up because such sport-related injuries are not exclusive to men playing high-impact professional sports. These injuries can happen to people of any age for any variety of reasons,
+                    and understanding HOW these impacts occur, and what are the most dangerous situations we can be in that maximize the incidence of TBI, we can make attempts to avoid such situations, or recognize when a player is 
+                    putting themselves at high risk, and trying to shape their gameplay behavior to reduce the risk associated. 
+                
+                </p>
             </div>
             <img src="{{ url_for('static', filename='images/brain_anatomy.jpg') }}" alt="Forces in Football">
         </div>
 
         <h1 class="centered-header">Mechanics of Concussions</h1>
-
+        <div class="text-content">
+            <h2 class = "centered">STOP: Close your eyes and imagine a football player getting a concussion.
+            </h2>
+            <div class="centered-list">
+                <ul>
+                    <li>How were they hit?</li>
+                    <li>What happened to their head when they were impacted?</li>
+                    <li>Did they hit the ground or another player?</li>
+                    <li>Were they tackling or being tackled or neither?</li>
+                </ul>
+            </div><br><br>
+        </div>
         <div class="image-row">
             <img src="{{ url_for('static', filename='images/Brain.jpg') }}" alt="Head Impacts">
             <img src="{{ url_for('static', filename='images/transverse-concussion.gif') }}" alt="Concussion Mechanics">
             <img src="{{ url_for('static', filename='images/rotation-concussion.gif') }}" alt="Prevention Strategies">
         </div>
         <div class="text-content">
-            <p>Text about mechanics of concussions...</p>
+            <p>When most people think about a football player getting a concussion, they think of a player being tackled and slammed down to the ground, often on their back, followed by their head slamming onto the ground. 
+                The second most common is when a player is thrown down and makes ground contact with their shoulder, and then their head hits the ground. <br><br>
+                
+                If you're thinking about the mechanics we discussed about, considering the differences in linear and angular momentum, and you take a look at the figure above on the left, we can see that different changes in momentum
+                cause different type of concussions. The translational concussion is linear impulse and only that. This may happen if a player hits the ground face first or on their back, or perhaps 
+                if two players collide in such a way that the neck is stabilized. As can be seen in the image, the region of the brain that is damaged is the part of the brain that is stopped by 
+                the skull shortly after impact (when the skull was stopped). Inertia of the brain continues until it is acted upon by the skull, the opposing force in this case. <br><br>
+
+                But as I mentioned before, our neck acts as a pivot point for our head. It's all wobbly and such when forces exceed what our neck can hold. This is where we focus on the Angular concussion. This is demonstrated in the .gif 
+                in the center. The body may be forced to the ground, and the head is simply attached to the body. As the head accelerates, it also begins rotation, now introducing angular momentum with the linear momentum. 
+                Upon impact, the brain is both in translational and angular movement, but upon impact, both the translation and angular are stopped, transforming the angular into translational and adding to the linear impulse.<br><br>
+                
+                This center diagram primarily shows what happens to the front of the cranium. If you carefully watch the back of the head following the 'bounce' backward, you can see a second highlighted region. This is known
+                as a coup-countercoup injury, where the area opposite the side of injury is also affected. This is commonly associated with whiplash. However; this is not particularly common when 
+                a head hits the ground. It is more common when a player's head doesn't hit the ground, and the elasticity of the neck muscles pull the head back upward after their extension. This is what is demonstrated in 
+                the right .gif above. This happens not only when players hit the ground 
+                but also when they collide with other player. This is a demonstration of Newton's Third law, with an equal and opposite reaction to the elastic forces of the neck to the forces opposing 
+                the movement of the head both linearly and angularly. Once the force of the head diminishes, the elastic forces of the neck must equilibrate my moving the head to maintain balanced forces.<br><br>
+
+                It's probably not necessary to mention this, but let's do it anyway: Brain damage to 2 parts of your brain is worse than 1. <br><br>
+
+                Now, finally, the Rotational concussion in the diagram. This isn't as common in football, but it is extremely common in the new (hopefully) fad sport of Professional Slapping. It is EXACTLY like it sounds. 
+                One person slaps the other across the face, forcing the opponent's face into rotation. If the impulse is high enough, the skull will rotate and the brain, well, won't. Now imagine all of the points of contact that 
+                a rotating skull has on a squishy briain just trying to stay still. <br><br>
+
+                While the rotation isn't as common in football, the issues that arise with rotational movement are the same. Injuries with rotational movement have the potential to impact the brain at more points of contact, 
+                which is not adequately shown by any of the diagrams. It's not as simple as coup-countercoup. The brain will continue to move in a linear fashion until something forces it into rotation. 
+                The skull forcing a brain into rotation is applying that motion to all parts of the brain resisting movement on the sides opposite the translational motion. (That's a mouthful) That being said, rotational 
+                movement of the skull is far more subtle to see in a play, yet has a much more serious effect on multiple regions of the brain... <br><br>
+                
+                ... and if you're still following from the above, that means that even minor injuries that are being applied to broad regions of the brain in subconcussive injuries will be additive to the damage
+                throughout the season and potentially career of the player. <br><br>
+
+                Referecing back to my client, the water polo player - she sustained two consectuive angular hits by a 14-16 oz (400-450g) ball, where the ball impacted the back of the skull, forcing it forward and into rotation. The brain
+                remained still until the skull in rotation forced the brain into rotation until hitting the surface of the water and coming to a stop, transforming all motion in to a linear impulse. Twice within an hour. 
+                And the throwers of the ball were not Olympian athletes, they were just high school students.  <br><br>
+
+                This is just a reminder that we're discussing how the type of impact can take something seemingly benign and turn it into a major injury. 
+         
+            </p>
         </div>
 
         <h1 class="centered-header">Prevention Strategies</h1>
 
         <div class="text-content">
-            <p>Text about prevention strategies...</p>
+            <p>Different sports have worked on ways to prevent such injuries by changing rules to protect the players to improving gear that is supposed to help reduce the impact or distribute forces. 
+                An issue that often arises with the improvement of protective gear is Risk Compensation. This is a theory that describes how people adjust their behavior in response to perceived levels of risk.
+                They act more cautiously when they perceive higher risks, and more recklessly when they perceive lower risk. The introduction of safety features on vehicles is a classic demonstration of this effect: 
+                as more safety features are rolled out, designed to improve safety, people drive more recklessly. Likewise, each iteration of improved football protection has resulted in harder impacts and more dangerous 
+                play. <br><br>
+                The issue I see with concussions is more complex than this. When we're trying to reduce sprains and breaks, it's not hard to add external protective gear that can absorb the 
+                impacts that would be transferred to ligaments or bones. The type of concussion many people think of is the helmet-to-ground concussion, which we've examined earlier as a translational concussion. 
+                This is what the Vicis Zero2 helmet does: it uses a flexible outer shell that absorbs the impact from a helmet-to-ground collision that can reduce the force applied to the skull when making contact, 
+                and thus reducing the force the skull applies to the brain. However, this helmet is specifically designed for Quarterbacks because 50% of their concussions are a result of such helmet-to-ground impacts. 
+                These are not main causes of concussions overall. <br><br>
+                The issue with angular and rotational concussions is that a concussion can occur without ground contact at a specific point, which is how the Zero2 works. Another issue with the Zero2 is that at the writing of this page, 
+                the Zero2 costs over $700, and is likely not going to be affordable for most high school and collegiate Quarterbacks. So the ultimate question I am asking is how do you reduce the impulse in a rotating system?<br><br>
+                
+                I've highlighted three problems regarding these rotational injuries: 
+                <ul>
+                    <li>The initial rotation of the skull forcing the brain into rotation.</li>
+                    <li>Upon the skull stopping, the conversion from rotation into translational force onto the skull.</li>
+                    <li>The coup-countercoup phenomenon if the skull doesn't just stop, and returns to movement in the opposite direction.</li>
+                </ul>
+
+                Instead of solely looking at the restrictions and protections of American Football, I have been considering alternative activites such martial arts that also experience high impulse conditions but 
+                change the direction of the momentum to reduce the impulse in any particular direction. Additionally, I have been looking at how different types of animals have evolved to reduce the risk of concussion. 
+                <br><br>
+                The physical practices in Aikido is the redirection of an attacker's force to avoid confronting them head-on. The intention is a peaceful resolution to conflict. Welp, head-on conflict is seemingly built into 
+                American Football, so, that may be a problem... but maybe not. The Vicis helmet is designed to redirect energy and reduce forces from a head-on collision, and in the case of a QB head-to-ground impact, the play is 
+                pretty unavoidable for the Quarterbacks if it happens. But many other conconcussions result from players landing in such a way that their heads aren't directly stopped by the ground. In such a situation, there are
+                two ways that forces can be diverted - while they are in rotation before hitting the ground, and the destabilized neck upon impact. <br><br>
+                
+                Not all players have experienced serious concussions. It is as important to learn from players with long careers who haven't sustained concussions to learn from them what they do to avoid them. In some full contact 
+                sports, it's as simple as forcing one's self into rotation prior to hitting the ground, to maintain angular movement instead of changing angular momentum into linear, and having high impulse. <br><br>
+
+                One animal that should suffer extreme concussions is the ram. The horns of the ram are part of the skull, and the shape and structure of the horns actually absorbs part of the impact by diverting energy.
+                An additional change that has evolved with the ram is a fluid cushion in the front of their skulls that slows the brain, preventing such impact. This is another method that has been tested in NFL helmets, but, again, only
+                really worked with translational impacts. But why don't rams suffer angular or rotational concussions? Their neck muscles are extremely powerful and prevent this rotation from happening, even on indirect impacts. <br><br> 
+
+                Can we design something that still allows players a mostly full range of motion, but upon impact becomes more rigid to prevent the whole wobbly head that goes into rotation? Even using lower-cost materials, it 
+                should be possible to design a neck brace with a non-Newtonian fluid, like corn starch or drilling mud, that upon quick movement remains rigid, but upon slower movement remains flexible. Something like this could reduce the 
+                range of motion of the neck, preventing the angular momentum, and additive translational momentum upon impact. <br><br>
+
+                The NFL has been adding rules and researching equipment that can help their players maintain long careers without suffering permanent damage upon either willing or forced retirement. But what about non-professional players? 
+                In the NCAA across all divisions, NAIA, and NJCAA, there are overr 850 college-level football teams in the USA, and many more high school teams. These players aren't being monitored and corrected for unsafe play and adapting to subtle rule changes 
+                like the players in the NFL. Furthermore, these younger players don't play with the discipline of a professional player, still making impulse decisions that may put them in jeopardy of such an injury during a play. So while 
+                they also aren't facing as massive a player, the linear and angular impulses they experience still exceed the low limits required to induce a TBI.<br><br>
+                
+                In conclusion, I would like to task other engineers to determine additional ways to redirect the momentum and forces of players and their heads, and design affordable equipment that can accomodate the weights of such younger players, 
+                to keep them protected during a critical time of brain development.<br><br>
+                
+                I probably also don't need to mention that NFL players who retire following an injury still have an XX Million dollar contract to fall back on. A high school or college student who sustains a TBI that results in permanent damage is
+                very detrimental to their future. 
+
+            </p>
         </div>
     </div>    
 </div>

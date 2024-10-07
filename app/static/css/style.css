@@ -318,6 +318,23 @@ h1:hover {
     color: var(--nfl-red);
 }
 
+.centered {
+    text-align: center;
+}
+
+.centered-list {
+    display: flex;
+    justify-content: center;
+}
+
+.centered-list ul {
+    display: inline-block;
+    text-align: left;
+    font-size: 30px;
+    padding-left: 20px;
+    /* Adjust as needed */
+}
+
 .centered-header {
     text-align: center;
     background-color: var(--nfl-blue);
@@ -357,7 +374,13 @@ h1:hover {
 
 .text-content {
     flex: 1;
+    font-size: 24px;
     padding: 0 20px;
+}
+
+.text-content .emphasis {
+    font-weight: bold;
+    font-style: italic;
 }
 
 .image-row {
@@ -373,7 +396,15 @@ h1:hover {
     /* max-height: 400px; */
 }
 
+.formula {
+    font-size: 1.2em;
+    text-align: center;
+    margin: 20px 0;
+}
 
+
+
+/* Visualizations Page */
 .visualizations-container {
     padding: 20px;
     max-width: 2200px;
