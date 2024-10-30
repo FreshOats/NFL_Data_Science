@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Concussion Biomechanical Analytics{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     <link rel="stylesheet" type='text/css' href="{{url_for('static', filename='css/style.css')}}">
 </head>
 
@@ -33,7 +34,7 @@
             <ul>
                 <li><a href="{{ url_for('index') }}">Home</a></li>
                 <li><a href="{{ url_for('biomechanics') }}">Biomechanics</a></li>
-                <li><a href="{{ url_for('stats') }}">Stats</a></li>
+                <li><a href="{{ url_for('stats') }}">Findings</a></li>
                 <li><a href="{{ url_for('visualizations') }}">Visualizations</a></li>
             </ul>
         </div>

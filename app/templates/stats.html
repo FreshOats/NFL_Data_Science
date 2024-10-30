@@ -1,6 +1,82 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Stats</h1>
-<p>Content for the Stats page will go here.</p>
+div class="biomechanics-container">
+<div class="biomechanics-content">
+    <h1 id="intro" class="centered-header">Unsupervised Learning</h1>
+    <div class="section-content left-image">
+        <img src="{{ url_for('static', filename='images/Dendogram_Concussion_Data.png') }}" alt="Dendogram">
+        <div class="text-content">
+            <h2>Agglomerative Clustering</h2>
+            <p>The purpose of the unsupervised learning was to assist in identifying the key correlations with concussions and the 
+                physical data from the player. In this initial analysis, I used agglomerative clustering with a dendogram to visualize
+                and characterize the parameters from this high-dimension dataset. As can be seen from the image on the left, there are two 
+                primary splits that separate the data into 3 groups with a high level of separation. As we get closer to the bottom of the 
+                dendogram, it's clear that there are further divisions, but reducing dimensionality is the top priority for the learning model.
+                <br><br>
+                This analysis was performed with 3 clusters prior to breaking up into two sets using train_test_split for feature classification.
+                A Balanced Random Forest Classifier with 100 estimators was used to determine which features had the highest correlation with the different
+                classes. In this analysis, I found that the twist, or the difference in orientation of the player and the direction of motion was 
+                the highest estimator correlating with plays and players who got concussions. 
+            </p>
+        </div>
+    </div>
+
+    <div class="section-content right-image">
+        <img src="{{ url_for('static', filename='images/Elbow_Curve1.png') }}" alt="Elbow Curve">
+        <div class="text-content">
+    
+            <h2>Feature Analysis</h2>
+            <p>Following the agglomerative clustering, I used PCA data extraction to reduce the dimensionality to 3 components. I plotted a curve with 
+                k-means clusters to get the elbow curve, shown on the right, yielding a clear bend at 2 clusters. The 3 dimensional data was then plotted, separating 
+                2 classes, using hv plot. I found, again, that the highest predictor was the difference between orientation and direction of motion, but this time
+                 quantified the feature importance, and found that this parameter had a 98% importance in classifying positive concussions. The 3D plot is shown below. 
+            </p>
+        </div>
+    </div>
+
+    <div class="section-content left-image">
+        <img src="{{ url_for('static', filename='images/K-Means_Cluster.png') }}" alt="Elbow Curve">
+        <div class="text-content">
+            <p>Other features that were associated to a lesser degree were the location on the field, temperature of the game, and player position. It makes sense that 
+                players in certain positions are more likely to incur concussions than other players. During punt plays, Linebackers were 3 times more likely to sustain a concussion
+                than most other positions, making up 26% of all concussions during those 2 seasons, followed by Cornerbacks at 16% and Wide Receivers at 10%. 
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="biomechanics-container">
+    <div class="biomechanics-content">
+        <h1 id="intro" class="centered-header">Analysis</h1>
+            <div class="section-content right-image">
+                <img src="{{ url_for('static', filename='images/weird_rotation.gif') }}" alt="Concussion">
+                <div class="text-content">
+            
+                    <h2>The Impact Leading to Injury</h2>
+                    <p>The most interesting finding from the outcome of the feature analysis is in identifying the direction that the player was facing versus the direction of motion.
+                        This was a challenge to assess because the players may actually rotate 360 degrees more than once in a play. In order to eliminate errors with angular changes, I transformed
+                        all values trigonometrically to analyze the motion in vector components. What was found was that players who sustained concussions correlated highly with a difference in 
+                        direction vs. orientation of 90 degrees to either the left or right. <br><br>
+
+                        Upon further analysis of the plays, most players who sustained concussions did not make impact with the ground - which is what most people think of when they 
+                        think about players getting traumatic brain injuries. Most concussions were sustained when making contact with another player, either colliding while running or during a 
+                        tackle. There was no significant difference between those doing the tackling or those being tackled with incidence of concussion. <br><br>
+
+                        How these brain injuries are occurring is when impact is made on a player who is oriented in a different direction than their direction of motion, their head is 
+                        rotated to the side, rather than forward or backward. Since the head and neck are not stabilized, the brain is subjected to a much higher change in angular momentum than 
+                        the rest of the body, and depending on the type of contact, the head may experience a coup-countercoup injury, as shown in the awkward diagram to the right. This finding supports
+                        medical documentation that suggests that rotational concussions are far more common in sports injuries than transverse concussions. <br><br>
+                        
+                        The big problem is that most parents, coaches, and peers are only assessing players who have had dramatic head-to-ground impact from transverse movement for concussive and subconcussive 
+                        injuries, when in reality, the players are very unlikely to get a concussion that way. One of the purposes of this project is to raise awareness on how to identify the high
+                        risk plays that can lead to such injuries, and the most likely plays to incur such are those where two players collide, with or without helmet-to-helmet contact, but even helmet-to-body
+                        contact where a player's head rotates to the side. 
+                    </p>
+                </div>
+            </div>
+    </div>
+</div>
+
+
 {% endblock %}
